@@ -1,7 +1,24 @@
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field
+from uuid import UUID
+from pathlib import Path
 
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel, Field
+from sqlalchemy import text
+from sqlalchemy.orm import Session, joinedload
+
+from app import models, schemas
+from app.ai_assistant import router as ai_router
+from app.auth import (
+    create_access_token,
+    get_current_user,
+    hash_password,
+    verify_password,
+)
+from app.db import get_db
 from app.services.listings import list_active_listings
 from app.services.listings_sell import create_vehicle_listing
 from app.services.orders import (
@@ -11,11 +28,19 @@ from app.services.orders import (
     update_fulfillment_status,
 )
 from app.services.parts_finder import find_recommendations
-from app.services.vin_lookup import VinLookupError, lookup_vin
+from app.services.vin_lookup import VinLookupError, decode_vin, lookup_vin
+from app.services.vin_parts import find_parts_by_vin
 from app.services.vin_suggestions import suggest_vehicles_by_vin
 from app.services.vehicles import list_vehicle_catalog
 
-app = FastAPI(title="Salon AutoZone")
+app = FastAPI(
+    title="AutoParts & VIN Finder API",
+    description="E-commerce catalog with integrated rule-based AI mechanic assistant",
+    version="1.0.0",
+)
+app.mount("/static", StaticFiles(directory=Path(__file__).with_name("static")), name="static")
+templates = Jinja2Templates(directory=Path(__file__).with_name("templates"))
+app.include_router(ai_router)
 
 
 class PartOrderPayload(BaseModel):
@@ -49,9 +74,9 @@ class VehicleListingPayload(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
-def index():
-    return HTMLResponse(
-        """
+async def index(request: Request):
+    return templates.TemplateResponse("vin_lookup.html", {"request": request})
+    """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -492,12 +517,271 @@ def index():
         </body>
         </html>
         """
-    )
 
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok", "service": "parts-finder-api"}
+
+
+@app.post("/api/auth/register", status_code=status.HTTP_201_CREATED)
+def register_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing_email = (
+        db.query(models.User).filter(models.User.email == user_data.email).first()
+    )
+    if existing_email is not None:
+        raise HTTPException(status_code=400, detail="Email is already registered")
+
+    existing_phone = (
+        db.query(models.User).filter(models.User.phone == user_data.phone_number).first()
+    )
+    if existing_phone is not None:
+        raise HTTPException(status_code=400, detail="Phone number is already registered")
+
+    new_user = models.User(
+        email=user_data.email,
+        hashed_password=hash_password(user_data.password),
+        full_name=user_data.full_name,
+        phone=user_data.phone_number,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"message": "User registered successfully", "user_id": str(new_user.id)}
+
+
+@app.post("/api/auth/login")
+def login_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.User).filter(models.User.email == form_data.username).first()
+    if user is None or not user.hashed_password or not verify_password(
+        form_data.password, user.hashed_password
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(data={"sub": str(user.id)})
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+        },
+    }
+
+
+@app.get("/api/auth/me")
+def get_logged_in_user(current_user: models.User = Depends(get_current_user)):
+    return {
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "phone_number": current_user.phone,
+        "cars": [
+            {
+                "id": str(car.id),
+                "user_id": str(car.user_id),
+                "vin": car.vin,
+                "make": car.make,
+                "model": car.model,
+                "year": car.year,
+                "trim": car.trim,
+                "engine": car.engine,
+            }
+            for car in current_user.cars
+        ],
+        "orders": [
+            {
+                "id": str(order.id),
+                "status": order.status,
+                "total_amount": order.total_amount,
+                "currency_code": order.currency_code,
+                "created_at": order.created_at,
+                "items": [
+                    {
+                        "id": str(item.id),
+                        "quantity": item.quantity,
+                        "unit_price": item.unit_price,
+                        "currency_code": item.currency_code,
+                        "fulfillment_status": item.fulfillment_status,
+                    }
+                    for item in order.items
+                ],
+            }
+            for order in current_user.orders
+        ],
+    }
+
+
+@app.get("/api/vin/decode/{vin}")
+async def preview_car_from_vin(vin: str):
+    try:
+        return await decode_vin(vin)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail="Failed to reach VIN decoding service."
+        ) from exc
+
+
+@app.post(
+    "/api/users/{user_id}/cars/from-vin",
+    response_model=schemas.CarResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_car_by_vin(user_id: UUID, vin: str, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    normalized_vin = vin.strip().upper()
+    existing_car = db.query(models.Car).filter(models.Car.vin == normalized_vin).first()
+    if existing_car is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="A vehicle with this VIN is already registered.",
+        )
+
+    try:
+        car_info = await decode_vin(normalized_vin)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail="Failed to reach VIN decoding service."
+        ) from exc
+
+    new_car = models.Car(
+        user_id=user_id,
+        vin=car_info["vin"],
+        make=car_info["make"],
+        model=car_info["model"],
+        year=car_info["year"],
+        trim=car_info["trim"],
+        engine=(
+            f"{car_info['engine_displacement']}L"
+            if car_info["engine_displacement"]
+            else None
+        ),
+    )
+    db.add(new_car)
+    db.commit()
+    db.refresh(new_car)
+    return new_car
+
+
+@app.get("/api/user/dashboard/{user_id}")
+def get_user_dashboard(user_id: UUID, db: Session = Depends(get_db)):
+    user = (
+        db.query(models.User)
+        .options(joinedload(models.User.orders).joinedload(models.Order.items))
+        .filter(models.User.id == user_id)
+        .first()
+    )
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User profile not found")
+
+    vehicle_rows = db.execute(
+        text(
+            """
+            SELECT DISTINCT
+                v.id, l.vin, v.make, v.model, v.year_from, v.engine
+            FROM vehicles v
+            JOIN listings l ON l.vehicle_id = v.id
+            WHERE l.seller_id = :user_id
+               OR l.id IN (
+                    SELECT oi.listing_id
+                    FROM order_items oi
+                    JOIN orders o ON o.id = oi.order_id
+                    WHERE o.buyer_id = :user_id AND oi.listing_id IS NOT NULL
+               )
+            ORDER BY v.make, v.model, v.year_from
+            """
+        ),
+        {"user_id": user_id},
+    ).mappings()
+
+    item_rows = db.execute(
+        text(
+            """
+            SELECT
+                oi.id AS item_id,
+                p.part_number,
+                p.name AS part_name,
+                l.vehicle_id
+            FROM order_items oi
+            JOIN orders o ON o.id = oi.order_id
+            LEFT JOIN supplier_parts sp ON sp.id = oi.supplier_part_id
+            LEFT JOIN parts p ON p.id = sp.part_id
+            LEFT JOIN listings l ON l.id = oi.listing_id
+            WHERE o.buyer_id = :user_id
+            """
+        ),
+        {"user_id": user_id},
+    ).mappings()
+    items_by_id = {row["item_id"]: row for row in item_rows}
+
+    return {
+        "profile": {
+            "id": str(user.id),
+            "full_name": user.full_name,
+            "email": user.email,
+            "phone_number": user.phone,
+            "member_since": user.created_at,
+        },
+        "vehicles": [
+            {
+                "id": str(row["id"]),
+                "vin": row["vin"],
+                "make": row["make"],
+                "model": row["model"],
+                "year": row["year_from"],
+                "trim": None,
+                "engine": row["engine"],
+            }
+            for row in vehicle_rows
+        ],
+        "order_history": [
+            {
+                "order_id": str(order.id),
+                "car_id": next(
+                    (
+                        str(items_by_id[item.id]["vehicle_id"])
+                        for item in order.items
+                        if items_by_id[item.id]["vehicle_id"] is not None
+                    ),
+                    None,
+                ),
+                "status": order.status,
+                "total_amount": order.total_amount,
+                "date": order.created_at,
+                "parts": [
+                    {
+                        "part_number": items_by_id[item.id]["part_number"],
+                        "part_name": items_by_id[item.id]["part_name"],
+                        "quantity": item.quantity,
+                        "unit_price": item.unit_price,
+                    }
+                    for item in order.items
+                ],
+            }
+            for order in user.orders
+        ],
+    }
 
 
 @app.get("/api/vin-lookup")
@@ -506,6 +790,21 @@ def vin_lookup(vin: str = Query(..., min_length=17, max_length=17)):
         return lookup_vin(vin)
     except VinLookupError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/vin/lookup/{vin}")
+async def dynamic_vin_lookup(vin: str):
+    cleaned_vin = vin.strip().upper()
+    if len(cleaned_vin) != 17:
+        raise HTTPException(status_code=400, detail="VIN must be exactly 17 characters.")
+
+    try:
+        car_data = await decode_vin(cleaned_vin)
+        return {"success": True, "data": car_data}
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="NHTSA lookup service unavailable.") from exc
 
 
 @app.get("/api/vin-suggestions")
@@ -544,6 +843,26 @@ def parts_finder(
         }
         for item in items
     ]
+
+
+@app.get("/api/parts/by-vin/{vin}")
+def parts_by_vin(vin: str):
+    try:
+        normalized_vin = vin.strip().upper()
+        from app.services.vin_lookup import VIN_PATTERN
+
+        if not VIN_PATTERN.fullmatch(normalized_vin):
+            return JSONResponse(status_code=400, content={"error": "invalid_vin"})
+
+        result = find_parts_by_vin(normalized_vin)
+        if result is None:
+            return JSONResponse(status_code=404, content={"error": "vehicle_not_found"})
+        return result
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "internal_error", "message": "Something went wrong."},
+        )
 
 
 @app.get("/api/listings")
@@ -621,3 +940,127 @@ def sell_vehicle(payload: VehicleListingPayload):
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return listing
+import os
+import uuid
+from typing import List, Optional
+from enum import Enum
+from datetime import datetime
+
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from sqlalchemy import create_engine, Column, String, Numeric, Enum as SQLEnum, DateTime, ForeignKey
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
+from sqlalchemy.dialects.postgresql import UUID
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/salon_autozone")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# --- Database Models ---
+class PaymentMethod(str, Enum):
+    mobile_money = "mobile_money"
+    bank_transfer = "bank_transfer"
+    cash = "cash"
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    buyer_id = Column(UUID(as_uuid=True), nullable=False)
+    status = Column(String, default="pending")
+    payment_method = Column(SQLEnum(PaymentMethod), nullable=False)
+    payment_status = Column(String, default="unpaid")
+    delivery_address = Column(String, nullable=True)
+    total_amount = Column(Numeric(12, 2), nullable=False, default=0.0)
+    currency_code = Column(String(3), default="NLE")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    items = relationship("OrderItem", back_populates="order")
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
+    item_type = Column(String, nullable=False)
+    supplier_part_id = Column(UUID(as_uuid=True), nullable=True)
+    listing_id = Column(UUID(as_uuid=True), nullable=True)
+    quantity = Column(Numeric, nullable=False, default=1)
+    unit_price = Column(Numeric(12, 2), nullable=False)
+    currency_code = Column(String(3), default="NLE")
+
+    order = relationship("Order", back_populates="items")
+
+# --- Schemas ---
+class OrderItemCreate(BaseModel):
+    item_type: str
+    supplier_part_id: Optional[uuid.UUID] = None
+    listing_id: Optional[uuid.UUID] = None
+    quantity: int = 1
+    unit_price: float
+
+class MobileMoneyCheckoutRequest(BaseModel):
+    buyer_id: uuid.UUID
+    phone_number: str
+    provider: str  # "orange_money" or "afrimoney"
+    delivery_address: Optional[str] = "Store Pickup - Freetown Hub"
+    items: List[OrderItemCreate]
+
+# --- FastAPI App ---
+app = FastAPI(title="Salon AutoZone API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.post("/api/checkout/mobile-money")
+def checkout(payload: MobileMoneyCheckoutRequest, db: Session = Depends(get_db)):
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="Cart items cannot be empty.")
+
+    total = sum(item.unit_price * item.quantity for item in payload.items)
+
+    order = Order(
+        buyer_id=payload.buyer_id,
+        status="confirmed",
+        payment_method=PaymentMethod.mobile_money,
+        payment_status="paid",
+        delivery_address=payload.delivery_address,
+        total_amount=total,
+        currency_code="NLE"
+    )
+    db.add(order)
+    db.flush()
+
+    for item in payload.items:
+        db.add(OrderItem(
+            order_id=order.id,
+            item_type=item.item_type,
+            supplier_part_id=item.supplier_part_id,
+            listing_id=item.listing_id,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+            currency_code="NLE"
+        ))
+
+    db.commit()
+    return {
+        "order_id": order.id,
+        "status": "paid",
+        "total": total,
+        "currency": "NLE",
+        "message": f"Payment prompt sent to {payload.phone_number} via {payload.provider.replace('_', ' ').title()}."
+    }

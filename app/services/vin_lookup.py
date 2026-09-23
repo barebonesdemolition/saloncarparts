@@ -6,13 +6,56 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+import httpx
+
 VIN_PATTERN = re.compile(r"^[A-HJ-NPR-Z0-9]{17}$")
 VPIC_URL = "https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/{vin}?format=json"
+NHTSA_VIN_API_URL = "https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/{vin}?format=json"
 RECALLS_URL = "https://api.nhtsa.gov/recalls/recallsByVin/{vin}?format=json"
 
 
 class VinLookupError(ValueError):
     pass
+
+
+async def decode_vin(vin: str) -> dict[str, Any]:
+    """Decode a 17-character VIN using the NHTSA vPIC values endpoint."""
+    cleaned_vin = vin.strip().upper()
+    if len(cleaned_vin) != 17:
+        raise ValueError("VIN must be exactly 17 characters long.")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(NHTSA_VIN_API_URL.format(vin=cleaned_vin))
+            response.raise_for_status()
+            data = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        raise VinLookupError("VIN decoder is temporarily unavailable.") from exc
+
+    results = data.get("Results", [])[0] if data.get("Results") else {}
+    make = results.get("Make")
+    model = results.get("Model")
+    year_value = results.get("ModelYear")
+
+    if not make or not model or not year_value:
+        raise ValueError("Could not decode vehicle details from the provided VIN.")
+
+    try:
+        year = int(year_value)
+    except (TypeError, ValueError):
+        year = None
+
+    return {
+        "vin": cleaned_vin,
+        "make": make,
+        "model": model,
+        "year": year,
+        "trim": results.get("Trim") or None,
+        "body_class": results.get("BodyClass") or None,
+        "engine_displacement": results.get("DisplacementL") or None,
+        "engine_cylinders": results.get("EngineCylinders") or None,
+        "drive_type": results.get("DriveType") or None,
+    }
 
 
 def _get_json(url: str) -> dict[str, Any]:

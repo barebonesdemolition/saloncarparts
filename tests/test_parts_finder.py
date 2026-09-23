@@ -100,6 +100,53 @@ def test_parts_finder_requires_vin_or_vehicle_details():
     assert "Provide a VIN" in response.json()["detail"]
 
 
+def test_parts_by_vin_route_returns_fitment_payload(monkeypatch):
+    monkeypatch.setattr(
+        "app.main.find_parts_by_vin",
+        lambda vin: {
+            "vin": vin,
+            "decode_source": "local",
+            "catalog_match": True,
+            "vehicle": {"make": "Toyota", "model": "Corolla", "model_year": 2007},
+            "parts": [],
+        },
+    )
+
+    response = TestClient(app).get("/api/parts/by-vin/jtdbr32e173000001")
+
+    assert response.status_code == 200
+    assert response.json()["vin"] == "JTDBR32E173000001"
+    assert response.json()["vehicle"]["model"] == "Corolla"
+
+
+def test_parts_by_vin_rejects_malformed_vin():
+    response = TestClient(app).get("/api/parts/by-vin/TOOSHORT")
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "invalid_vin"}
+
+
+def test_parts_by_vin_returns_machine_readable_not_found(monkeypatch):
+    monkeypatch.setattr("app.main.find_parts_by_vin", lambda vin: None)
+
+    response = TestClient(app).get("/api/parts/by-vin/1NXBR32E205123456")
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "vehicle_not_found"}
+
+
+def test_parts_by_vin_returns_stable_internal_error(monkeypatch):
+    def fail(vin):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr("app.main.find_parts_by_vin", fail)
+
+    response = TestClient(app).get("/api/parts/by-vin/1NXBR32E205123456")
+
+    assert response.status_code == 500
+    assert response.json() == {"error": "internal_error", "message": "Something went wrong."}
+
+
 def test_vin_lookup_route_returns_decoded_vehicle(monkeypatch):
     monkeypatch.setattr(
         "app.main.lookup_vin",
@@ -123,6 +170,52 @@ def test_vin_lookup_rejects_invalid_vin():
     response = TestClient(app).get("/api/vin-lookup?vin=invalid")
 
     assert response.status_code == 422
+
+
+def test_dynamic_vin_lookup_returns_success_envelope(monkeypatch):
+    async def fake_decode(vin):
+        return {"vin": vin, "make": "Toyota", "model": "Corolla"}
+
+    monkeypatch.setattr("app.main.decode_vin", fake_decode)
+
+    response = TestClient(app).get("/api/vin/lookup/jtdbr32e173000001")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "success": True,
+        "data": {"vin": "JTDBR32E173000001", "make": "Toyota", "model": "Corolla"},
+    }
+
+
+def test_dynamic_vin_lookup_rejects_wrong_length():
+    response = TestClient(app).get("/api/vin/lookup/TOOSHORT")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "VIN must be exactly 17 characters."
+
+
+def test_dynamic_vin_lookup_maps_decoder_value_error(monkeypatch):
+    async def fake_decode(vin):
+        raise ValueError("Could not decode VIN.")
+
+    monkeypatch.setattr("app.main.decode_vin", fake_decode)
+
+    response = TestClient(app).get("/api/vin/lookup/1NXBR32E205123456")
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Could not decode VIN."
+
+
+def test_dynamic_vin_lookup_maps_unexpected_error(monkeypatch):
+    async def fake_decode(vin):
+        raise RuntimeError("service unavailable")
+
+    monkeypatch.setattr("app.main.decode_vin", fake_decode)
+
+    response = TestClient(app).get("/api/vin/lookup/1NXBR32E205123456")
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "NHTSA lookup service unavailable."
 
 
 def test_vin_suggestions_route(monkeypatch):

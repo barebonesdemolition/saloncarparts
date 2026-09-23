@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoZone | VIN Lookup & AI Mechanic Advisor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      autozone: { red: '#D52B1E', orange: '#F37F00', dark: '#121212', gray: '#1E1E1E', lightgray: '#2A2A2A', border: '#333333' }
+    } } } };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="flex min-h-screen flex-col bg-autozone-dark font-sans text-gray-100" x-data="autozoneApp()">
+  <header class="sticky top-0 z-40 border-b border-autozone-red bg-black shadow-md">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+      <div class="flex items-center space-x-3">
+        <div class="rounded-sm bg-autozone-red px-3 py-1 text-2xl font-extrabold italic tracking-tighter text-white shadow">AutoZone<span class="text-autozone-orange">.</span></div>
+        <span class="hidden border-l border-gray-700 pl-3 text-xs font-semibold uppercase tracking-widest text-gray-400 md:inline">Parts & Fitment Finder</span>
+      </div>
+      <div class="flex items-center space-x-2 rounded-md border border-autozone-border bg-autozone-gray px-3 py-1.5 text-sm">
+        <i class="fa-solid fa-car text-autozone-orange"></i>
+        <span x-text="selectedVehicle ? selectedVehicle.name : 'No Vehicle Selected'" class="font-medium text-gray-200"></span>
+        <button type="button" @click="clearVehicle()" x-show="selectedVehicle" aria-label="Clear vehicle" class="ml-2 text-gray-400 hover:text-autozone-red"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto grid w-full max-w-7xl flex-grow grid-cols-1 gap-8 px-4 py-8 md:grid-cols-3">
+    <section class="h-fit rounded-lg border border-autozone-border bg-autozone-gray p-6 shadow-lg">
+      <h1 class="mb-4 flex items-center text-xl font-bold text-white"><i class="fa-solid fa-barcode mr-2 text-autozone-orange"></i> VIN Lookup</h1>
+      <form @submit.prevent="lookupVin" class="space-y-4">
+        <div>
+          <label for="vin-input" class="mb-1 block text-xs font-semibold uppercase text-gray-400">Enter 17-Digit VIN</label>
+          <input id="vin-input" type="text" maxlength="17" x-model="vinInput" placeholder="e.g. JTDBR32E173000001" autocomplete="off" spellcheck="false"
+            class="w-full rounded border border-autozone-border bg-autozone-lightgray p-2.5 font-mono uppercase text-white focus:border-autozone-orange focus:outline-none">
+        </div>
+        <button type="submit" :disabled="vinLoading" class="flex w-full items-center justify-center space-x-2 rounded bg-autozone-red px-4 py-2.5 font-bold text-white shadow transition hover:bg-red-700 disabled:opacity-50">
+          <i class="fa-solid fa-search"></i><span x-text="vinLoading ? 'Decoding...' : 'Decode Vehicle'"></span>
+        </button>
+      </form>
+      <div x-show="vinError" x-cloak class="mt-3 rounded border border-red-700 bg-red-950/40 p-3 text-sm text-red-300" x-text="vinError"></div>
+      <div x-show="decodedVehicle" x-cloak class="mt-5 rounded border border-autozone-orange bg-autozone-dark p-4">
+        <div class="text-xs uppercase tracking-wider text-autozone-orange">Decoded vehicle</div>
+        <div class="mt-1 text-lg font-bold" x-text="decodedVehicle ? `${decodedVehicle.year || decodedVehicle.model_year || 'Unknown'} ${decodedVehicle.make} ${decodedVehicle.model}` : ''"></div>
+        <div class="mt-2 text-xs text-gray-400" x-text="decodedVehicle ? decodedVehicle.vin : ''"></div>
+        <button type="button" @click="useDecodedVehicle" class="mt-3 text-xs font-semibold text-autozone-orange hover:text-white">Use for advisor <i class="fa-solid fa-arrow-right ml-1"></i></button>
+      </div>
+      <div class="mt-8 border-t border-autozone-border pt-6">
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">Saved Vehicles</h2>
+        <template x-if="savedVehicles.length === 0">
+          <p class="text-xs text-gray-500">Decode a VIN to set your vehicle context.</p>
+        </template>
+        <div class="space-y-2">
+          <template x-for="vehicle in savedVehicles" :key="vehicle.id">
+            <button type="button" @click="selectVehicle(vehicle)" class="flex w-full items-center justify-between rounded border p-3 text-left transition" :class="selectedVehicle && selectedVehicle.id === vehicle.id ? 'border-autozone-orange bg-autozone-lightgray text-white' : 'border-autozone-border bg-autozone-dark text-gray-300 hover:border-gray-500'">
+              <div><div class="text-sm font-bold" x-text="vehicle.name"></div><div class="text-xs text-gray-400" x-text="'VIN: ' + vehicle.vin"></div></div><i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
+            </button>
+          </template>
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-6 md:col-span-2">
+      <div class="rounded-lg border border-autozone-border bg-autozone-gray p-6 shadow-lg">
+        <div class="mb-4 flex items-center justify-between gap-4">
+          <h2 class="flex items-center text-xl font-bold text-white"><i class="fa-solid fa-wrench mr-2 text-autozone-orange"></i> Auto Diagnostics & Recommendations</h2>
+          <span class="rounded-full bg-autozone-red px-2.5 py-1 text-xs font-bold uppercase text-white">Live Fitment</span>
+        </div>
+        <p class="mb-6 text-sm text-gray-300">Describe symptoms or required parts. The assistant cross-references catalog fitments and supplier stock for the selected vehicle.</p>
+        <div class="mb-6 flex flex-wrap gap-2">
+          <button type="button" @click="triggerPrompt('Squealing noise when braking at low speeds')" class="rounded-full border border-autozone-border bg-autozone-lightgray px-3 py-1.5 text-xs text-gray-200 transition hover:bg-autozone-border"><i class="fa-solid fa-bolt mr-1 text-autozone-orange"></i> Squealing Brakes</button>
+          <button type="button" @click="triggerPrompt('Engine misfire and rough idling')" class="rounded-full border border-autozone-border bg-autozone-lightgray px-3 py-1.5 text-xs text-gray-200 transition hover:bg-autozone-border"><i class="fa-solid fa-bolt mr-1 text-autozone-orange"></i> Rough Engine Idle</button>
+          <button type="button" @click="triggerPrompt('Car hesitant to start on cold morning')" class="rounded-full border border-autozone-border bg-autozone-lightgray px-3 py-1.5 text-xs text-gray-200 transition hover:bg-autozone-border"><i class="fa-solid fa-bolt mr-1 text-autozone-orange"></i> Ignition / Starter Issues</button>
+        </div>
+        <div x-show="advisorParts.length" x-cloak class="grid gap-3 sm:grid-cols-2">
+          <template x-for="part in advisorParts" :key="part.part_number">
+            <article class="rounded border border-autozone-border bg-black p-3 text-sm"><div class="font-bold text-white" x-text="part.brand + ' ' + part.name"></div><div class="font-mono text-xs text-gray-400" x-text="'Part #: ' + part.part_number"></div><div class="mt-2 flex justify-between"><span class="font-bold text-autozone-orange" x-text="part.price !== null ? `${part.currency} ${part.price}` : 'Check price'"></span><span class="text-xs text-green-400" x-text="part.in_stock ? 'In Stock' : 'Pre-order'"></span></div></article>
+          </template>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="fixed bottom-6 right-6 z-50">
+    <button type="button" @click="toggleAiDrawer" aria-label="Open mechanic AI" class="flex items-center justify-center space-x-2 rounded-full border-2 border-white bg-autozone-orange p-4 font-bold text-white shadow-2xl transition hover:scale-105 hover:bg-orange-600"><i class="fa-solid fa-robot text-2xl"></i><span class="hidden text-sm md:inline">Ask Mechanic AI</span></button>
+    <section x-show="aiDrawerOpen" x-cloak x-transition class="fixed bottom-24 right-6 flex h-[520px] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-xl border-2 border-autozone-orange bg-autozone-gray shadow-2xl">
+      <header class="flex items-center justify-between border-b border-autozone-border bg-black p-4"><div class="flex items-center space-x-2"><span class="h-3 w-3 animate-pulse rounded-full bg-autozone-orange"></span><span class="text-sm font-bold text-white">AutoZone AI Mechanic Advisor</span></div><button type="button" @click="toggleAiDrawer" aria-label="Close advisor" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></header>
+      <div class="flex-grow space-y-4 overflow-y-auto bg-autozone-dark p-4 text-sm" aria-live="polite">
+        <template x-for="(msg, index) in messages" :key="index"><div :class="msg.role === 'user' ? 'text-right' : 'text-left'"><div class="inline-block max-w-[85%] rounded-lg p-3" :class="msg.role === 'user' ? 'bg-autozone-orange text-white' : 'border border-autozone-border bg-autozone-lightgray text-gray-200'"><p x-text="msg.text" class="whitespace-pre-line"></p><template x-if="msg.parts && msg.parts.length"><div class="mt-3 space-y-2 border-t border-autozone-border pt-2 text-left"><span class="block text-xs font-bold uppercase text-autozone-orange">Recommended Parts</span><template x-for="part in msg.parts" :key="part.part_number"><div class="rounded border border-autozone-border bg-black p-2 text-xs"><div class="font-bold text-white" x-text="part.brand + ' ' + part.name"></div><div class="text-gray-400" x-text="'Part #: ' + part.part_number"></div><div class="mt-1 flex justify-between"><span class="font-bold text-autozone-orange" x-text="part.price !== null ? `${part.currency} ${part.price}` : 'Check Price'"></span><span class="text-green-400" x-text="part.in_stock ? 'In Stock' : 'Pre-order'"></span></div></div></template></div></template></div></div></template>
+        <div x-show="loading" x-cloak class="text-left"><div class="inline-block rounded-lg border border-autozone-border bg-autozone-lightgray p-3 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-autozone-orange"></i> Analyzing symptoms & catalog fitment...</div></div>
+      </div>
+      <form @submit.prevent="sendAiQuery" class="flex items-center space-x-2 border-t border-autozone-border bg-black p-3"><input type="text" x-model="aiPrompt" placeholder="Ask about symptoms or parts..." aria-label="Ask about symptoms or parts" class="flex-grow rounded border border-autozone-border bg-autozone-lightgray px-3 py-2 text-sm text-white focus:border-autozone-orange focus:outline-none"><button type="submit" :disabled="loading" aria-label="Send question" class="rounded bg-autozone-orange p-2 font-bold text-white transition hover:bg-orange-600 disabled:opacity-50"><i class="fa-solid fa-paper-plane"></i></button></form>
+    </section>
+  </div>
+
+  <script>
+    function autozoneApp() {
+      return {
+        vinInput: '', vinLoading: false, vinError: '', decodedVehicle: null, aiPrompt: '', aiDrawerOpen: false, loading: false,
+        selectedVehicle: JSON.parse(localStorage.getItem('selected_vehicle') || 'null'), savedVehicles: JSON.parse(localStorage.getItem('saved_vehicles') || '[]'), advisorParts: [],
+        messages: [{ role: 'assistant', text: 'Hello! I am your AutoZone Mechanic Assistant. How can I help diagnose your vehicle today?' }],
+        toggleAiDrawer() { this.aiDrawerOpen = !this.aiDrawerOpen; },
+        selectVehicle(vehicle) { this.selectedVehicle = vehicle; localStorage.setItem('selected_vehicle', JSON.stringify(vehicle)); localStorage.setItem('selected_vehicle_id', vehicle.id); },
+        clearVehicle() { this.selectedVehicle = null; localStorage.removeItem('selected_vehicle'); localStorage.removeItem('selected_vehicle_id'); },
+        useDecodedVehicle() { this.selectedVehicle = { id: this.decodedVehicle.vehicle_id || this.decodedVehicle.id || null, name: `${this.decodedVehicle.year || this.decodedVehicle.model_year || ''} ${this.decodedVehicle.make} ${this.decodedVehicle.model}`, vin: this.decodedVehicle.vin }; localStorage.setItem('selected_vehicle', JSON.stringify(this.selectedVehicle)); if (this.selectedVehicle.id) localStorage.setItem('selected_vehicle_id', this.selectedVehicle.id); },
+        triggerPrompt(promptText) { this.aiPrompt = promptText; this.aiDrawerOpen = true; this.sendAiQuery(); },
+        async lookupVin() {
+          this.vinInput = this.vinInput.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''); this.vinError = ''; this.decodedVehicle = null;
+          if (this.vinInput.length !== 17) { this.vinError = 'VIN must be exactly 17 characters.'; return; }
+          this.vinLoading = true;
+          try { const response = await fetch(`/api/vin/lookup/${encodeURIComponent(this.vinInput)}`); const data = await response.json(); if (!response.ok) throw new Error(data.detail || 'Unable to decode VIN.'); this.decodedVehicle = data.data; } catch (error) { this.vinError = error.message; } finally { this.vinLoading = false; }
+        },
+        async sendAiQuery() {
+          if (!this.aiPrompt.trim() || this.loading) return; const userText = this.aiPrompt; this.messages.push({ role: 'user', text: userText }); this.aiPrompt = ''; this.loading = true;
+          try { const response = await fetch('/api/ai/advisor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: userText, vehicle_id: this.selectedVehicle ? this.selectedVehicle.id : null }) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || 'Advisor unavailable.'); this.advisorParts = data.parts || []; this.messages.push({ role: 'assistant', text: data.reply || 'I reviewed your request.', parts: data.parts || [] }); } catch (error) { this.messages.push({ role: 'assistant', text: error.message || 'Unable to connect to advisor endpoint.' }); } finally { this.loading = false; }
+        }
+      };
+    }
+  </script>
+</body>
+</html>
