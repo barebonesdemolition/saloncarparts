@@ -39,6 +39,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Include Routers
 app.include_router(auth.router)
+
 app.include_router(parts.router)
 app.include_router(listings.router)
 app.include_router(orders.router)

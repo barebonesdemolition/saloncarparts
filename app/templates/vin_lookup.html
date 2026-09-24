@@ -85,9 +85,87 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
   .categories{grid-template-columns:repeat(2,1fr);margin-top:-30px}
   .grid{grid-template-columns:1fr}
 }
+
+/* ========== MOBILE MENU ========== */
+.hamburger{display:none;background:transparent;border:none;cursor:pointer;padding:8px;}
+.mobile-menu{display:none;background:#0b1e3a;padding:12px 20px;flex-direction:column;gap:4px;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.mobile-menu.open{display:flex;}
+.mobile-menu a{color:white;text-decoration:none;padding:12px 10px;border-radius:8px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px;}
+.mobile-menu a:hover{background:rgba(255,255,255,0.08);}
+.cat-icon{width:32px;height:32px;margin-bottom:6px;color:#00a8e8;stroke-width:2;}
+.list-btn{background:#ff6b00;color:white !important;padding:8px 16px;border-radius:8px;margin-left:12px !important;font-weight:bold;}
+@media (max-width:768px){
+  .hamburger{display:flex !important;align-items:center;justify-content:center;background:#0b1e3a;border-radius:8px;margin-left:auto;}
+  .brand-actions{display:none !important;}
+  .categories{grid-template-columns:repeat(3,1fr) !important;}
+  .cat-icon{width:28px;height:28px;}
+  .category{padding:14px 6px !important;}
+  .category-label{font-size:11px !important;}
+}
+@media (max-width:400px){
+  .categories{grid-template-columns:repeat(2,1fr) !important;}
+}
+
 </style>
 </head>
 <body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="icon-brakes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="3"/>
+    <line x1="12" y1="2" x2="12" y2="6"/>
+    <line x1="12" y1="18" x2="12" y2="22"/>
+    <line x1="2" y1="12" x2="6" y2="12"/>
+    <line x1="18" y1="12" x2="22" y2="12"/>
+  </symbol>
+  <symbol id="icon-engine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12h3l2-4h6l2 4h3"/>
+    <circle cx="7" cy="18" r="2"/>
+    <circle cx="17" cy="18" r="2"/>
+    <path d="M5 12v6M19 12v6"/>
+  </symbol>
+  <symbol id="icon-suspension" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2v4M12 18v4"/>
+    <path d="M8 6h8M8 18h8"/>
+    <path d="M9 9h6M9 15h6"/>
+    <path d="M10 12h4"/>
+  </symbol>
+  <symbol id="icon-electrical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </symbol>
+  <symbol id="icon-tires" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="5"/>
+    <circle cx="12" cy="12" r="1"/>
+    <line x1="12" y1="2" x2="12" y2="7"/>
+    <line x1="12" y1="17" x2="12" y2="22"/>
+  </symbol>
+  <symbol id="icon-accessories" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/>
+    <circle cx="12" cy="12" r="3"/>
+  </symbol>
+  <symbol id="icon-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 17h14v-5l-2-5H7l-2 5v5z"/>
+    <circle cx="7" cy="17" r="2"/>
+    <circle cx="17" cy="17" r="2"/>
+    <path d="M9 7V4h6v3"/>
+  </symbol>
+  <symbol id="icon-parts" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>
+  </symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="3" y1="6" x2="21" y2="6"/>
+    <line x1="3" y1="12" x2="21" y2="12"/>
+    <line x1="3" y1="18" x2="21" y2="18"/>
+  </symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </symbol>
+</svg>
+
 <div class="top-bar">
 <div><strong>Salon AutoZone HQ - Freetown, Sierra Leone</strong></div>
 <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
@@ -103,15 +181,27 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 <button id="btn-parts" class="active" onclick="switchMarket('parts')">AutoZone Parts Store</button>
 <button id="btn-vehicles" class="cars" onclick="switchMarket('vehicles')">AutoTrader Cars &amp; Trucks</button>
 </div>
+<button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+<svg style="width:24px;height:24px" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-menu"/></svg>
+</button>
 <div class="brand-actions">
 <a href="/vin-tool">VIN Lookup</a>
 <a href="/login">Login</a>
+<a href="/" onclick="event.preventDefault();openModal('parts')" class="list-btn">+ List Item</a>
 </div>
 </div>
 
+
+<div id="mobile-menu" class="mobile-menu">
+<a href="/">🏠 Home</a>
+<a href="/vin-tool">🔍 VIN Lookup</a>
+<a href="/login">👤 Login / Register</a>
+<a href="#" onclick="event.preventDefault();closeMobileMenu();openModal('vehicle')">🚗 + List Your Car</a>
+<a href="#" onclick="event.preventDefault();closeMobileMenu();openModal('parts')">🔧 + List a Part</a>
+</div>
 <div class="fitment-bar">
 <div class="fitment-left">
-<div class="fitment-icon">CAR</div>
+<div class="fitment-icon"><svg style="width:24px;height:24px;" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-car"/></svg></div>
 <div>
 <div class="fitment-label">Your Vehicle</div>
 <div class="fitment-value" id="fitment-label">Not set - select your car for exact-fit parts</div>
@@ -172,12 +262,30 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 </div>
 
 <div class="categories" id="categories-row">
-<div class="category" onclick="filterCategory('Brakes')"><div class="category-icon">B</div><div class="category-label">Brakes</div></div>
-<div class="category" onclick="filterCategory('Engine')"><div class="category-icon">E</div><div class="category-label">Engine</div></div>
-<div class="category" onclick="filterCategory('Suspension')"><div class="category-icon">S</div><div class="category-label">Suspension</div></div>
-<div class="category" onclick="filterCategory('Electrical')"><div class="category-icon">L</div><div class="category-label">Electrical</div></div>
-<div class="category" onclick="filterCategory('Tires &amp; Wheels')"><div class="category-icon">T</div><div class="category-label">Tires</div></div>
-<div class="category" onclick="filterCategory('Accessories')"><div class="category-icon">A</div><div class="category-label">Accessories</div></div>
+<div class="category" onclick="filterCategory('Brakes')">
+<svg class="cat-icon"><use href="#icon-brakes"/></svg>
+<div class="category-label">Brakes</div>
+</div>
+<div class="category" onclick="filterCategory('Engine')">
+<svg class="cat-icon"><use href="#icon-engine"/></svg>
+<div class="category-label">Engine</div>
+</div>
+<div class="category" onclick="filterCategory('Suspension')">
+<svg class="cat-icon"><use href="#icon-suspension"/></svg>
+<div class="category-label">Suspension</div>
+</div>
+<div class="category" onclick="filterCategory('Electrical')">
+<svg class="cat-icon"><use href="#icon-electrical"/></svg>
+<div class="category-label">Electrical</div>
+</div>
+<div class="category" onclick="filterCategory('Tires &amp; Wheels')">
+<svg class="cat-icon"><use href="#icon-tires"/></svg>
+<div class="category-label">Tires</div>
+</div>
+<div class="category" onclick="filterCategory('Accessories')">
+<svg class="cat-icon"><use href="#icon-accessories"/></svg>
+<div class="category-label">Accessories</div>
+</div>
 </div>
 
 <div class="results-section">
@@ -657,6 +765,16 @@ async function submitImportRequest(e){
 }
 
 // ========== INIT ==========
+
+function toggleMobileMenu(){
+  var menu = document.getElementById('mobile-menu');
+  if(menu) menu.classList.toggle('open');
+}
+function closeMobileMenu(){
+  var menu = document.getElementById('mobile-menu');
+  if(menu) menu.classList.remove('open');
+}
+
 function init(){
   var token=localStorage.getItem('token');
   if(token){
