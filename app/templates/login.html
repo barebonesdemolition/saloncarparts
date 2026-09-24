@@ -56,9 +56,16 @@ input:focus { outline: none; border-color: #00a8e8; }
 <input type="tel" id="reg-phone" required placeholder="+232 76 123456">
 <label>Password</label>
 <input type="password" id="reg-password" required minlength="6">
-<div class="vendor-check">
-<input type="checkbox" id="reg-vendor">
-<label for="reg-vendor" style="margin:0;">I want to sell cars or parts</label>
+<div style="margin-top:15px;">
+  <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;">What are you here for? (choose all that apply)</label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <label class="role-opt"><input type="checkbox" class="role-check" value="buyer" checked> 🛒 Buy cars or parts</label>
+    <label class="role-opt"><input type="checkbox" class="role-check" value="seller"> 🚗 Sell my car</label>
+    <label class="role-opt"><input type="checkbox" class="role-check" value="vendor"> 🔧 Sell parts (shop)</label>
+    <label class="role-opt"><input type="checkbox" class="role-check" value="dealership"> 🏪 I'm a dealership</label>
+    <label class="role-opt"><input type="checkbox" class="role-check" value="importer"> 🌍 I import parts</label>
+    <label class="role-opt"><input type="checkbox" class="role-check" value="mechanic"> 🛠️ I'm a mechanic</label>
+  </div>
 </div>
 <button type="submit" class="submit-btn">Create Account</button>
 <div id="register-status" class="status"></div>
