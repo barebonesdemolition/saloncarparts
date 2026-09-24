@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to Salon AutoZone!</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#0b1e3a 0%,#1a3a6b 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:white;border-radius:20px;padding:40px 32px;max-width:520px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.3);text-align:center}
+.confetti{font-size:64px;margin-bottom:12px}
+.logo{font-size:22px;font-weight:900;color:#0b1e3a;margin-bottom:20px}
+.logo span{color:#00a8e8}
+.logo .y{color:#ffb800}
+h1{font-size:28px;color:#0b1e3a;margin-bottom:8px;line-height:1.2}
+.name{color:#00a8e8;font-weight:800}
+.subtitle{color:#64748b;font-size:15px;margin-bottom:24px;line-height:1.5}
+.list{background:#f8fafc;border-radius:14px;padding:20px;text-align:left;margin-bottom:24px}
+.list-title{font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:1px;margin-bottom:12px}
+.list-item{display:flex;align-items:flex-start;gap:12px;padding:8px 0;font-size:14px;color:#334155;line-height:1.4}
+.list-item .emoji{font-size:20px;flex-shrink:0}
+.btn{display:block;width:100%;padding:16px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;border:none;margin-bottom:10px;font-family:inherit;text-decoration:none;text-align:center}
+.btn-primary{background:linear-gradient(135deg,#ff6b00,#e55a00);color:white}
+.btn-secondary{background:#f0f4f8;color:#0b1e3a;border:1px solid #e2e8f0}
+.footer{margin-top:20px;padding-top:20px;border-top:1px solid #f1f5f9;color:#94a3b8;font-size:13px}
+.footer strong{color:#0b1e3a}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="confetti">🎉</div>
+  <div class="logo">Salon<span>AutoZone</span> <span class="y">&amp; AutoTrader</span></div>
+  <h1>Welcome to <br>Salon AutoZone!</h1>
+  <p class="subtitle">Hi <span class="name" id="user-name">there</span>,<br>Your account is all set. You're now part of Sierra Leone's #1 marketplace for cars and auto parts.</p>
+  <div class="list">
+    <div class="list-title">What you can do now</div>
+    <div class="list-item"><span class="emoji">🚗</span><span>Browse cars from local sellers</span></div>
+    <div class="list-item"><span class="emoji">🔧</span><span>Find parts for any Toyota, Honda, Nissan</span></div>
+    <div class="list-item"><span class="emoji">🌍</span><span>Request parts from abroad (7-14 days)</span></div>
+    <div class="list-item"><span class="emoji">📱</span><span>Contact sellers directly on WhatsApp</span></div>
+    <div class="list-item"><span class="emoji">🔢</span><span>Decode any VIN instantly</span></div>
+  </div>
+  <a href="/" class="btn btn-primary">Explore Marketplace →</a>
+  <a href="/dashboard" class="btn btn-secondary">Go to My Dashboard</a>
+  <div class="footer">Signed in as <strong id="user-email">your account</strong></div>
+</div>
+<script>
+(function(){
+  try {
+    var raw = localStorage.getItem('userInfo');
+    if (raw) {
+      var u = JSON.parse(raw);
+      if (u.full_name) document.getElementById('user-name').innerText = u.full_name.split(' ')[0];
+      if (u.email) document.getElementById('user-email').innerText = u.email;
+    }
+    var token = localStorage.getItem('token');
+    if (token) {
+      fetch('/api/auth/me', {headers:{'Authorization':'Bearer '+token}})
+        .then(function(r){return r.ok?r.json():null})
+        .then(function(u){
+          if (u) {
+            if (u.full_name) document.getElementById('user-name').innerText = u.full_name.split(' ')[0];
+            if (u.email) document.getElementById('user-email').innerText = u.email;
+            localStorage.setItem('userInfo', JSON.stringify(u));
+          }
+        })
+        .catch(function(){});
+    }
+  } catch(e){}
+})();
+</script>
+</body>
+</html>

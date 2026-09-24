@@ -127,6 +127,15 @@ async def catalog_detail_page(request: Request, part_id: int):
     )
 
 
+@app.get("/welcome", response_class=HTMLResponse)
+async def welcome_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="welcome.html",
+        context={"app_name": settings.APP_NAME},
+    )
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "app": settings.APP_NAME}
