@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -279,3 +280,36 @@ async def update_import_status(
     req.status = status
     await db.commit()
     return {"message": "Updated", "id": req_id, "status": status}
+
+
+# ---------- ONE-TIME SETUP ENDPOINT ----------
+@router.post("/promote-first-admin")
+async def promote_first_admin(
+    email: str,
+    key: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    One-time setup endpoint to promote a user to admin on a fresh DB.
+    Requires a secret SETUP_KEY env var. Should be disabled after setup.
+    """
+    expected_key = os.getenv("SETUP_KEY", "")
+    if not expected_key:
+        raise HTTPException(status_code=403, detail="Setup not enabled. Set SETUP_KEY env var.")
+    if key != expected_key:
+        raise HTTPException(status_code=403, detail="Invalid setup key.")
+
+    result = await db.execute(select(models.User).where(models.User.email == email))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User {email} not found. Register first.")
+
+    user.is_admin = True
+    await db.commit()
+    await db.refresh(user)
+    return {
+        "message": f"{user.full_name} is now ADMIN",
+        "user_id": user.id,
+        "email": user.email,
+        "is_admin": user.is_admin,
+    }
