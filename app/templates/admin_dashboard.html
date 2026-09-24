@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - {{ app_name }}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
+.navbar{background:#0b1e3a;color:white;padding:14px 30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.logo{font-size:18px;font-weight:900;color:#00a8e8;text-decoration:none}
+.logo span{color:#ffb800}
+.admin-badge{background:#ff6b00;color:white;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:bold;margin-left:10px}
+.navbar a{color:white;text-decoration:none;font-size:13px;margin-left:20px}
+.container{max-width:1400px;margin:30px auto;padding:0 20px}
+.login-prompt{background:white;border-radius:16px;padding:60px 40px;text-align:center;max-width:500px;margin:80px auto;box-shadow:0 10px 40px rgba(0,0,0,0.1)}
+.login-prompt h1{color:#0b1e3a;margin-bottom:12px;font-size:22px}
+.login-prompt p{color:#64748b;margin-bottom:24px;font-size:14px}
+.login-prompt input{width:100%;padding:12px;border:1px solid #e0e6ed;border-radius:8px;margin-bottom:12px;font-size:14px;font-family:inherit}
+.login-prompt button{width:100%;padding:14px;background:#00a8e8;color:white;border:none;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:white;padding:18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);border-left:4px solid #00a8e8}
+.stat-card.green{border-left-color:#22c55e}
+.stat-card.orange{border-left-color:#ff6b00}
+.stat-card.red{border-left-color:#dc2626}
+.stat-card.purple{border-left-color:#a855f7}
+.stat-label{font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px}
+.stat-value{font-size:28px;color:#0b1e3a;font-weight:900;margin-top:6px}
+.stat-sub{font-size:12px;color:#64748b;margin-top:4px}
+.tabs{display:flex;gap:6px;margin-bottom:20px;background:white;padding:6px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);flex-wrap:wrap}
+.tab{padding:10px 16px;background:transparent;border:none;border-radius:8px;font-weight:600;cursor:pointer;color:#64748b;font-size:13px;font-family:inherit}
+.tab.active{background:#0b1e3a;color:white}
+.tab:hover:not(.active){background:#f0f4f8}
+.section{background:white;border-radius:14px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,0.05);display:none}
+.section.active{display:block}
+.section h2{color:#0b1e3a;font-size:18px;margin-bottom:16px}
+.activity-item{display:flex;gap:14px;padding:12px;border-bottom:1px solid #f1f5f9;align-items:center}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:38px;height:38px;border-radius:10px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.activity-text{flex:1;color:#334155;font-size:14px}
+.activity-time{color:#94a3b8;font-size:11px;white-space:nowrap}
+.data-row{display:flex;gap:14px;padding:14px;border-bottom:1px solid #f1f5f9;align-items:center;flex-wrap:wrap}
+.data-row:last-child{border-bottom:none}
+.data-row:hover{background:#f8fafc}
+.data-main{flex:1;min-width:200px}
+.data-title{font-weight:700;color:#0b1e3a;font-size:14px}
+.data-meta{color:#64748b;font-size:12px;margin-top:3px}
+.wa-btn{background:#25D366;color:white;padding:7px 12px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;border:none;cursor:pointer;white-space:nowrap}
+.wa-btn:hover{background:#1da851}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge.new{background:#fef3c7;color:#92400e}
+.badge.contacted{background:#dbeafe;color:#1e40af}
+.badge.sold{background:#dcfce7;color:#166534}
+.badge.pending{background:#fef3c7;color:#92400e}
+.badge.quoted{background:#dbeafe;color:#1e40af}
+.badge.ordered{background:#e0e7ff;color:#3730a3}
+.badge.delivered{background:#dcfce7;color:#166534}
+.loading{text-align:center;padding:40px;color:#94a3b8}
+.empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px}
+.status-select{padding:6px 10px;border-radius:6px;border:1px solid #e0e6ed;font-size:12px;font-family:inherit;background:white;cursor:pointer}
+.refresh-btn{background:#0b1e3a;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.refresh-btn:hover{background:#1a3a6b}
+@media(max-width:768px){
+  .navbar{padding:12px 16px;flex-wrap:wrap;gap:8px}
+  .logo{font-size:15px}
+  .container{padding:0 12px;margin-top:16px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-value{font-size:22px}
+  .tabs{overflow-x:auto;flex-wrap:nowrap}
+  .tab{white-space:nowrap;font-size:12px;padding:8px 12px}
+  .section{padding:16px}
+  .data-row{padding:10px}
+}
+</style>
+</head>
+<body>
+<div class="navbar">
+  <div>
+    <a href="/" class="logo">Salon<span>AutoZone</span></a>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div>
+    <a href="/">← Home</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
+</div>
+
+<!-- Login prompt (shown if not authenticated) -->
+<div id="login-prompt" class="login-prompt" style="display:none;">
+  <h1>🔒 Admin Access</h1>
+  <p>Enter your admin credentials to access the control center.</p>
+  <input type="email" id="admin-email" placeholder="Email">
+  <input type="password" id="admin-password" placeholder="Password">
+  <button onclick="loginAdmin()">Sign In</button>
+  <div id="login-status" style="margin-top:12px;font-size:13px;"></div>
+</div>
+
+<!-- Main dashboard (shown if authenticated) -->
+<div id="dashboard" class="container" style="display:none;">
+  <div class="stats-grid" id="stats-grid">
+    <div class="loading" style="grid-column:1/-1;">Loading stats...</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('activity')">📊 Activity</button>
+    <button class="tab" onclick="switchTab('inquiries')">💬 Inquiries</button>
+    <button class="tab" onclick="switchTab('imports')">🌍 Import Requests</button>
+    <button class="tab" onclick="switchTab('users')">👥 Users</button>
+  </div>
+
+  <div id="section-activity" class="section active">
+    <h2>📊 Recent Activity <button class="refresh-btn" style="float:right;" onclick="loadActivity()">↻ Refresh</button></h2>
+    <div id="activity-list"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div id="section-inquiries" class="section">
+    <h2>💬 All Inquiries <button class="refresh-btn" style="float:right;" onclick="loadInquiries()">↻ Refresh</button></h2>
+    <div id="inquiries-list"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div id="section-imports" class="section">
+    <h2>🌍 Import Requests <button class="refresh-btn" style="float:right;" onclick="loadImports()">↻ Refresh</button></h2>
+    <div id="imports-list"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div id="section-users" class="section">
+    <h2>👥 Registered Users <button class="refresh-btn" style="float:right;" onclick="loadUsers()">↻ Refresh</button></h2>
+    <div id="users-list"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<script>
+var token = localStorage.getItem('token') || '';
+var currentTab = 'activity';
+
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('userInfo');
+  window.location.href = '/';
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  var diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return new Date(iso).toLocaleDateString();
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function waLink(phone, msg) {
+  var clean = (phone || '').replace(/[^0-9]/g, '');
+  var text = encodeURIComponent(msg || 'Hi from Salon AutoZone');
+  return 'https://wa.me/' + clean + '?text=' + text;
+}
+
+async function checkAuth() {
+  if (!token) {
+    document.getElementById('login-prompt').style.display = 'block';
+    return false;
+  }
+  try {
+    var res = await fetch('/api/admin/stats', {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    if (res.ok) {
+      document.getElementById('dashboard').style.display = 'block';
+      var stats = await res.json();
+      renderStats(stats);
+      loadActivity();
+      return true;
+    } else if (res.status === 401 || res.status === 403) {
+      document.getElementById('login-prompt').style.display = 'block';
+      return false;
+    }
+  } catch(e) {
+    document.getElementById('login-prompt').style.display = 'block';
+    return false;
+  }
+}
+
+async function loginAdmin() {
+  var email = document.getElementById('admin-email').value;
+  var password = document.getElementById('admin-password').value;
+  var statusEl = document.getElementById('login-status');
+  statusEl.style.color = '#00a8e8';
+  statusEl.innerText = 'Signing in...';
+  try {
+    var res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: email, password: password})
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Invalid credentials');
+    localStorage.setItem('token', data.access_token);
+    token = data.access_token;
+    // Test admin access
+    var adminTest = await fetch('/api/admin/stats', {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    if (!adminTest.ok) {
+      statusEl.style.color = '#dc2626';
+      statusEl.innerText = '❌ This account is not an admin.';
+      localStorage.removeItem('token');
+      token = '';
+      return;
+    }
+    window.location.reload();
+  } catch(e) {
+    statusEl.style.color = '#dc2626';
+    statusEl.innerText = '❌ ' + e.message;
+  }
+}
+
+function renderStats(s) {
+  document.getElementById('stats-grid').innerHTML =
+    '<div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value">' + s.total_users + '</div><div class="stat-sub">+' + s.recent_users_7d + ' this week</div></div>' +
+    '<div class="stat-card orange"><div class="stat-label">Active Vehicles</div><div class="stat-value">' + s.active_vehicles + '</div><div class="stat-sub">listed for sale</div></div>' +
+    '<div class="stat-card purple"><div class="stat-label">Parts Listed</div><div class="stat-value">' + s.total_parts + '</div><div class="stat-sub">by vendors</div></div>' +
+    '<div class="stat-card green"><div class="stat-label">Total Inquiries</div><div class="stat-value">' + s.total_inquiries + '</div><div class="stat-sub">' + s.new_inquiries + ' new</div></div>' +
+    '<div class="stat-card red"><div class="stat-label">Import Requests</div><div class="stat-value">' + s.pending_import_requests + '</div><div class="stat-sub">pending action</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Supplier Catalog</div><div class="stat-value">' + s.supplier_catalog_size + '</div><div class="stat-sub">importable parts</div></div>';
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById('section-' + tab).classList.add('active');
+  if (tab === 'inquiries') loadInquiries();
+  if (tab === 'imports') loadImports();
+  if (tab === 'users') loadUsers();
+}
+
+async function loadActivity() {
+  var el = document.getElementById('activity-list');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    var res = await fetch('/api/admin/activity', {headers:{'Authorization':'Bearer '+token}});
+    var data = await res.json();
+    if (data.length === 0) {
+      el.innerHTML = '<div class="empty">No recent activity yet.</div>';
+      return;
+    }
+    el.innerHTML = data.map(function(item) {
+      return '<div class="activity-item"><div class="activity-icon">' + item.icon + '</div><div class="activity-text">' + esc(item.text) + '</div><div class="activity-time">' + timeAgo(item.timestamp) + '</div></div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load.</div>';
+  }
+}
+
+async function loadInquiries() {
+  var el = document.getElementById('inquiries-list');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    var res = await fetch('/api/admin/inquiries', {headers:{'Authorization':'Bearer '+token}});
+    var data = await res.json();
+    if (data.length === 0) {
+      el.innerHTML = '<div class="empty">No inquiries yet. When buyers contact sellers, they\'ll show here.</div>';
+      return;
+    }
+    el.innerHTML = data.map(function(i) {
+      var msg = 'Hi ' + esc(i.buyer_name) + ', thanks for your interest in ' + esc(i.listing_title || 'the listing') + ' on Salon AutoZone!';
+      return '<div class="data-row">' +
+        '<div class="data-main">' +
+        '<div class="data-title">' + esc(i.buyer_name) + ' → ' + esc(i.listing_title || '(listing ' + i.listing_id + ')') + '</div>' +
+        '<div class="data-meta">📱 ' + esc(i.buyer_phone) + ' • ' + timeAgo(i.created_at) + ' • <span class="badge ' + i.status + '">' + i.status + '</span></div>' +
+        (i.buyer_message ? '<div class="data-meta" style="margin-top:6px;font-style:italic;">"' + esc(i.buyer_message) + '"</div>' : '') +
+        '</div>' +
+        '<a href="' + waLink(i.buyer_phone, msg) + '" target="_blank" class="wa-btn">💬 Reply</a>' +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load.</div>';
+  }
+}
+
+async function loadImports() {
+  var el = document.getElementById('imports-list');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    var res = await fetch('/api/admin/import-requests', {headers:{'Authorization':'Bearer '+token}});
+    var data = await res.json();
+    if (data.length === 0) {
+      el.innerHTML = '<div class="empty">No import requests yet.</div>';
+      return;
+    }
+    el.innerHTML = data.map(function(r) {
+      var msg = 'Hi ' + esc(r.customer_name) + ', regarding your import request for ' + esc(r.part_name) + ' (' + esc(r.car_make) + ' ' + esc(r.car_model) + ')...';
+      return '<div class="data-row">' +
+        '<div class="data-main">' +
+        '<div class="data-title">🔍 ' + esc(r.part_name) + ' — ' + esc(r.car_make) + ' ' + esc(r.car_model) + ' (' + esc(r.car_year) + ')</div>' +
+        '<div class="data-meta">👤 ' + esc(r.customer_name) + ' • 📱 ' + esc(r.customer_phone) + ' • 📍 ' + esc(r.customer_location) + ' • ' + timeAgo(r.created_at) + '</div>' +
+        '<div class="data-meta">Qty: ' + r.quantity + ' • Budget: ' + (r.budget_sll ? 'SLL ' + Number(r.budget_sll).toLocaleString() : 'N/A') + ' • Urgency: ' + esc(r.urgency || 'Normal') + '</div>' +
+        '<div class="data-meta" style="margin-top:6px;"><span class="badge ' + r.status + '">' + r.status + '</span></div>' +
+        (r.notes ? '<div class="data-meta" style="margin-top:6px;font-style:italic;">"' + esc(r.notes) + '"</div>' : '') +
+        '</div>' +
+        '<a href="' + waLink(r.customer_phone, msg) + '" target="_blank" class="wa-btn">💬 Quote</a>' +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load.</div>';
+  }
+}
+
+async function loadUsers() {
+  var el = document.getElementById('users-list');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    var res = await fetch('/api/admin/users', {headers:{'Authorization':'Bearer '+token}});
+    var data = await res.json();
+    if (data.length === 0) {
+      el.innerHTML = '<div class="empty">No users registered yet.</div>';
+      return;
+    }
+    el.innerHTML = data.map(function(u) {
+      var msg = 'Hi ' + esc(u.full_name) + ', welcome to Salon AutoZone! How can we help you today?';
+      return '<div class="data-row">' +
+        '<div class="data-main">' +
+        '<div class="data-title">' + esc(u.full_name) + (u.is_admin ? ' <span class="badge new">ADMIN</span>' : '') + (u.is_vendor ? ' <span class="badge contacted">Vendor</span>' : '') + '</div>' +
+        '<div class="data-meta">📧 ' + esc(u.email) + ' • 📱 ' + esc(u.phone) + '</div>' +
+        '<div class="data-meta">Roles: ' + esc(u.roles || 'buyer') + ' • Joined ' + timeAgo(u.created_at) + '</div>' +
+        '</div>' +
+        '<a href="' + waLink(u.phone, msg) + '" target="_blank" class="wa-btn">💬 Message</a>' +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load.</div>';
+  }
+}
+
+checkAuth();
+</script>
+</body>
+</html>

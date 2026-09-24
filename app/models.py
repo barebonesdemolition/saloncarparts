@@ -13,6 +13,7 @@ class User(Base):
     hashed_password = Column(String)
     is_vendor = Column(Boolean, default=False)
     roles = Column(String, default="buyer")
+    is_admin = Column(Boolean, default=False)  # Only admins can see /admin panel
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

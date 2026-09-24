@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.routers import auth, parts, listings, orders, vin, upload, ai_chat, search, imports, catalog, unified_search, inquiries
+from app.routers import auth, parts, listings, orders, vin, upload, ai_chat, search, imports, catalog, unified_search, inquiries, admin
 from app.db import engine, Base
 from app.config import get_settings
 
@@ -49,6 +49,7 @@ app.include_router(ai_chat.router)
 app.include_router(imports.router)
 app.include_router(catalog.router)
 app.include_router(inquiries.router)
+app.include_router(admin.router)
 app.include_router(unified_search.router)
 app.include_router(search.router)
 
@@ -133,6 +134,15 @@ async def welcome_page(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="welcome.html",
+        context={"app_name": settings.APP_NAME},
+    )
+
+
+@app.get("/admin-panel-x9k2m7", response_class=HTMLResponse)
+async def admin_dashboard_secret(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_dashboard.html",
         context={"app_name": settings.APP_NAME},
     )
 
