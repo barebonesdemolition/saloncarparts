@@ -26,6 +26,7 @@ class VehicleCreate(VehicleBase):
 class VehicleResponse(VehicleBase):
     id: int
     is_sold: bool
+    seller_id: Optional[int] = None
     created_at: datetime
 
     class Config:
@@ -53,6 +54,7 @@ class PartCreate(PartBase):
 
 class PartResponse(PartBase):
     id: int
+    vendor_id: Optional[int] = None
     created_at: datetime
 
     class Config:
