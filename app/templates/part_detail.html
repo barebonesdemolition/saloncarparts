@@ -41,6 +41,25 @@
         <a href="/" class="back-link">← Back to Search</a>
         <div id="detail-content">Loading...</div>
     </div>
+
+<div id="inquiry-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:3000;align-items:center;justify-content:center;padding:20px;">
+<div style="background:white;border-radius:16px;max-width:460px;width:100%;padding:28px;position:relative;">
+<span onclick="closeInquiryModal()" style="position:absolute;top:14px;right:18px;font-size:26px;cursor:pointer;color:#888;">&times;</span>
+<h2 style="color:#0b1e3a;margin-bottom:6px;font-size:20px;">✉️ Send Inquiry</h2>
+<p style="color:#64748b;font-size:13px;margin-bottom:18px;">The vendor will contact you on WhatsApp.</p>
+<form id="inquiry-form" onsubmit="submitInquiry(event)">
+  <label style="display:block;font-size:13px;color:#475569;font-weight:600;margin-bottom:6px;">Your Name *</label>
+  <input name="buyer_name" required placeholder="e.g. Kadi Sesay" style="width:100%;padding:11px;border:1px solid #e0e6ed;border-radius:8px;margin-bottom:12px;font-size:14px;font-family:inherit;">
+  <label style="display:block;font-size:13px;color:#475569;font-weight:600;margin-bottom:6px;">Your WhatsApp Number *</label>
+  <input name="buyer_phone" required placeholder="+232 76 123 456" style="width:100%;padding:11px;border:1px solid #e0e6ed;border-radius:8px;margin-bottom:12px;font-size:14px;font-family:inherit;">
+  <label style="display:block;font-size:13px;color:#475569;font-weight:600;margin-bottom:6px;">Message</label>
+  <textarea name="buyer_message" rows="3" placeholder="Hi, I want this part. Is it in stock?" style="width:100%;padding:11px;border:1px solid #e0e6ed;border-radius:8px;margin-bottom:16px;font-size:14px;font-family:inherit;"></textarea>
+  <button type="submit" style="background:linear-gradient(135deg,#ff6b00,#e55a00);color:white;border:none;padding:14px;border-radius:10px;width:100%;font-weight:bold;font-size:15px;cursor:pointer;font-family:inherit;">Send Inquiry</button>
+  <div id="inquiry-status" style="margin-top:14px;text-align:center;font-weight:600;font-size:14px;"></div>
+</form>
+</div>
+</div>
+
 <script>
     const partId = window.location.pathname.split('/').pop();
     async function loadPart() {
@@ -88,7 +107,49 @@
             </div>
         `;
     }
-    loadPart();
+    
+function openInquiryModal() {
+  document.getElementById('inquiry-modal').style.display = 'flex';
+}
+function closeInquiryModal() {
+  document.getElementById('inquiry-modal').style.display = 'none';
+  document.getElementById('inquiry-form').reset();
+  document.getElementById('inquiry-status').innerHTML = '';
+}
+async function submitInquiry(e) {
+  e.preventDefault();
+  var statusEl = document.getElementById('inquiry-status');
+  statusEl.style.color = '#00a8e8';
+  statusEl.innerText = 'Sending...';
+  var form = e.target;
+  var data = new FormData(form);
+  var payload = {
+    listing_type: 'part',
+    listing_id: parseInt(partId),
+    buyer_name: data.get('buyer_name'),
+    buyer_phone: data.get('buyer_phone'),
+    buyer_message: data.get('buyer_message') || ''
+  };
+  try {
+    var res = await fetch('/api/inquiries/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      var err = await res.json();
+      throw new Error(err.detail || 'Failed to send');
+    }
+    statusEl.style.color = '#22c55e';
+    statusEl.innerHTML = '✅ Inquiry sent!<br>Vendor will contact you soon.';
+    setTimeout(function() { closeInquiryModal(); }, 2500);
+  } catch (err) {
+    statusEl.style.color = '#dc2626';
+    statusEl.innerText = '❌ ' + err.message;
+  }
+}
+
+loadPart();
 </script>
 </body>
 </html>

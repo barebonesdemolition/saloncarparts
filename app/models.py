@@ -142,3 +142,30 @@ class SupplierCatalog(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# --- Buyer Inquiries on Listings ---
+class Inquiry(Base):
+    __tablename__ = "inquiries"
+    id = Column(Integer, primary_key=True, index=True)
+
+    # What they're inquiring about
+    listing_type = Column(String, nullable=False)  # "vehicle" or "part"
+    listing_id = Column(Integer, nullable=False)
+    listing_title = Column(String, nullable=True)  # snapshot for display
+
+    # Buyer info
+    buyer_name = Column(String, nullable=False)
+    buyer_phone = Column(String, nullable=False)
+    buyer_message = Column(Text, nullable=True)
+
+    # Who should respond
+    seller_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    seller_phone = Column(String, nullable=True)
+
+    # Workflow
+    status = Column(String, default="new")  # new, contacted, negotiating, sold, lost
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
