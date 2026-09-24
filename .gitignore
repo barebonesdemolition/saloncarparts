@@ -1,6 +1,30 @@
+# Python
 __pycache__/
 *.py[cod]
-.pytest_cache/
-.env
+*.egg-info/
 .venv/
 venv/
+env/
+
+# Database
+*.db
+*.sqlite3
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads (keep folder, ignore content)
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# Logs
+*.log

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ app_name }} - Login</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0b1e3a, #1a3a6b); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-card { background: white; border-radius: 16px; padding: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.logo { text-align: center; font-size: 24px; font-weight: bold; color: #00a8e8; }
+.logo span { color: #ffb800; }
+h2 { text-align: center; color: #0b1e3a; margin: 20px 0 25px; font-size: 22px; }
+.tabs { display: flex; margin-bottom: 25px; background: #f0f4f8; border-radius: 10px; padding: 5px; }
+.tabs button { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-weight: 600; cursor: pointer; color: #666; }
+.tabs button.active { background: white; color: #0b1e3a; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; margin-top: 15px; font-weight: 600; }
+input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+input:focus { outline: none; border-color: #00a8e8; }
+.submit-btn { background: #00a8e8; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 25px; }
+.status { margin-top: 15px; text-align: center; font-weight: 600; }
+.success { color: #22c55e; }
+.error { color: #dc2626; }
+.back-link { text-align: center; margin-top: 20px; font-size: 13px; }
+.back-link a { color: #00a8e8; text-decoration: none; font-weight: 600; }
+.vendor-check { display: flex; align-items: center; gap: 8px; margin-top: 15px; font-size: 14px; }
+.vendor-check input { width: auto; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="login-card">
+<div class="logo">Salon<span>AutoZone</span></div>
+<div class="tabs">
+<button id="tab-login" class="active" onclick="switchTab('login')">Login</button>
+<button id="tab-register" onclick="switchTab('register')">Register</button>
+</div>
+<h2 id="form-title">Welcome Back</h2>
+<form id="login-form" onsubmit="handleLogin(event)">
+<label>Email</label>
+<input type="email" id="login-email" required>
+<label>Password</label>
+<input type="password" id="login-password" required>
+<button type="submit" class="submit-btn">Login</button>
+<div id="login-status" class="status"></div>
+</form>
+<form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+<label>Full Name</label>
+<input type="text" id="reg-fullname" required>
+<label>Email</label>
+<input type="email" id="reg-email" required>
+<label>Phone</label>
+<input type="tel" id="reg-phone" required placeholder="+232 76 123456">
+<label>Password</label>
+<input type="password" id="reg-password" required minlength="6">
+<div class="vendor-check">
+<input type="checkbox" id="reg-vendor">
+<label for="reg-vendor" style="margin:0;">I want to sell cars or parts</label>
+</div>
+<button type="submit" class="submit-btn">Create Account</button>
+<div id="register-status" class="status"></div>
+</form>
+<div class="back-link"><a href="/">← Back to Homepage</a></div>
+</div>
+<script>
+function switchTab(tab) {
+document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+document.getElementById('form-title').innerText = tab === 'login' ? 'Welcome Back' : 'Create Your Account';
+}
+async function handleLogin(e) {
+e.preventDefault();
+const s = document.getElementById('login-status');
+s.className = 'status'; s.innerText = 'Logging in...';
+try {
+const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('login-email').value, password: document.getElementById('login-password').value }) });
+const data = await res.json();
+if (!res.ok) throw new Error(data.detail || 'Login failed');
+localStorage.setItem('token', data.access_token);
+s.className = 'status success'; s.innerText = '✅ Logged in! Redirecting...';
+setTimeout(() => window.location.href = '/dashboard', 800);
+} catch (err) { s.className = 'status error'; s.innerText = '❌ ' + err.message; }
+}
+async function handleRegister(e) {
+e.preventDefault();
+const s = document.getElementById('register-status');
+s.className = 'status'; s.innerText = 'Creating account...';
+const payload = { full_name: document.getElementById('reg-fullname').value, email: document.getElementById('reg-email').value, phone: document.getElementById('reg-phone').value, password: document.getElementById('reg-password').value, is_vendor: document.getElementById('reg-vendor').checked };
+try {
+const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+const data = await res.json();
+if (!res.ok) throw new Error(data.detail || 'Registration failed');
+s.className = 'status success'; s.innerText = '✅ Account created! Logging in...';
+const loginRes = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: payload.email, password: payload.password }) });
+const loginData = await loginRes.json();
+if (loginRes.ok) { localStorage.setItem('token', loginData.access_token); setTimeout(() => window.location.href = '/dashboard', 800); }
+} catch (err) { s.className = 'status error'; s.innerText = '❌ ' + err.message; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ app_name }} - Import Quote</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8}
+.navbar{background:#0b1e3a;color:white;padding:15px 30px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:20px;font-weight:900;color:#00a8e8;text-decoration:none}
+.logo span{color:#ffb800}
+.navbar a{color:white;text-decoration:none;font-size:14px;margin-left:20px}
+.container{max-width:800px;margin:40px auto;padding:0 20px}
+.card{background:white;border-radius:16px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+.import-badge{display:inline-block;background:#ff6b00;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:bold;margin-bottom:15px}
+h1{color:#0b1e3a;font-size:26px;margin-bottom:12px}
+.part-number{font-family:monospace;background:#f0f4f8;color:#475569;padding:8px 14px;border-radius:8px;display:inline-block;font-size:14px;margin-bottom:20px}
+.info-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px}
+.info-box{background:#f8fafc;padding:15px;border-radius:10px}
+.info-label{font-size:12px;color:#888;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+.info-value{font-size:16px;font-weight:bold;color:#0b1e3a}
+.timeline{background:#fff7ed;padding:20px;border-radius:10px;border-left:4px solid #ff6b00;margin-top:25px}
+.timeline h3{color:#c2410c;margin-bottom:12px;font-size:15px}
+.timeline ol{margin-left:20px;line-height:1.8;color:#666}
+.btn-primary{background:linear-gradient(135deg,#ff6b00,#e55a00);color:white;border:none;padding:16px 30px;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;width:100%;margin-top:20px;box-shadow:0 6px 20px rgba(255,107,0,0.35)}
+.btn-whatsapp{background:#25D366;margin-top:10px;box-shadow:0 6px 20px rgba(37,211,102,0.35)}
+.back-link{color:#00a8e8;text-decoration:none;font-weight:bold;margin-bottom:20px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="navbar">
+<a href="/" class="logo">Salon<span>AutoZone</span> &amp; AutoTrader</a>
+<div>
+<a href="/">Home</a>
+<a href="/admin/catalog">Catalog Admin</a>
+</div>
+</div>
+<div class="container">
+<a href="/" class="back-link">← Back to Search</a>
+<div class="card" id="content">Loading...</div>
+</div>
+<script>
+var partId = window.location.pathname.split('/').pop();
+async function loadPart(){
+  try{
+    var res = await fetch('/api/unified/catalog/' + partId);
+    if(!res.ok) throw new Error('Not found');
+    var p = await res.json();
+    render(p);
+  }catch(err){
+    document.getElementById('content').innerHTML = '<div style="text-align:center;padding:40px;color:#888;">Part not found</div>';
+  }
+}
+function render(p){
+  var vehicle = p.vehicle_compatibility || 'Universal';
+  var category = p.category || 'Part';
+  document.getElementById('content').innerHTML = `
+    <div class="import-badge">🌍 Import Available</div>
+    <h1>${category}</h1>
+    <div class="part-number">${p.part_number}</div>
+    <div class="info-row">
+      <div class="info-box"><div class="info-label">Fits Vehicle</div><div class="info-value">${vehicle}</div></div>
+      <div class="info-box"><div class="info-label">Category</div><div class="info-value">${category}</div></div>
+      <div class="info-box"><div class="info-label">Ships From</div><div class="info-value">🌏 International Supplier</div></div>
+      <div class="info-box"><div class="info-label">Delivery Time</div><div class="info-value">7-14 days</div></div>
+    </div>
+    <div class="timeline">
+      <h3>How Importing Works</h3>
+      <ol>
+        <li>You submit a request with your details</li>
+        <li>We confirm price & availability with our supplier</li>
+        <li>We send you a quote on WhatsApp within 24 hours</li>
+        <li>You approve and pay (Orange Money / Afrimoney / Bank)</li>
+        <li>We order and deliver to your doorstep in Sierra Leone</li>
+      </ol>
+    </div>
+    <button class="btn-primary" onclick="requestQuote('${p.part_number}','${category}','${vehicle}')">📩 Request Import Quote</button>
+    <button class="btn-primary btn-whatsapp" onclick="whatsappUs('${p.part_number}')">💬 Chat on WhatsApp</button>
+  `;
+}
+function requestQuote(pn, cat, vehicle){
+  // Pre-fill and open the import modal on the homepage
+  var url = '/?import=' + encodeURIComponent(pn) + '&part=' + encodeURIComponent(cat) + '&vehicle=' + encodeURIComponent(vehicle);
+  window.location.href = url;
+}
+function whatsappUs(pn){
+  var msg = encodeURIComponent('Hi, I want to import: ' + pn + '. Can you send me a quote?');
+  window.open('https://wa.me/23276123456?text=' + msg, '_blank');
+}
+loadPart();
+</script>
+</body>
+</html>
