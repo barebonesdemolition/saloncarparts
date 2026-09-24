@@ -12,6 +12,7 @@ class User(Base):
     phone = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_vendor = Column(Boolean, default=False)
+    roles = Column(String, default="buyer")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

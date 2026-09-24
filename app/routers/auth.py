@@ -29,6 +29,7 @@ class UserCreate(BaseModel):
     phone: str
     password: str
     is_vendor: bool = False
+    roles: Optional[str] = None  # Comma-separated: buyer,seller,vendor,importer,mechanic,dealership,browser
 
 class UserLogin(BaseModel):
     email: str
@@ -40,6 +41,7 @@ class UserResponse(BaseModel):
     email: str
     phone: str
     is_vendor: bool
+    roles: Optional[str] = None
     
     class Config:
         from_attributes = True
