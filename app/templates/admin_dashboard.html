@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Admin - {{ app_name }}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -71,6 +71,138 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
   .section{padding:16px}
   .data-row{padding:10px}
 }
+
+/* ========== MOBILE ADMIN OPTIMIZATIONS ========== */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    .navbar > div {
+        width: 100%;
+        justify-content: center;
+        display: flex;
+        gap: 15px;
+    }
+    .logo { font-size: 16px; }
+    .admin-badge { font-size: 10px; padding: 3px 8px; }
+    
+    .container {
+        padding: 0 12px;
+        margin-top: 16px;
+    }
+    
+    .login-prompt {
+        margin: 30px 12px;
+        padding: 32px 20px;
+        border-radius: 14px;
+    }
+    .login-prompt h1 { font-size: 20px; margin-bottom: 10px; }
+    .login-prompt p { font-size: 13px; margin-bottom: 20px; }
+    .login-prompt input {
+        font-size: 16px;  /* Prevents iOS auto-zoom */
+        padding: 14px;
+        min-height: 48px;
+        border-radius: 10px;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    .login-prompt button {
+        font-size: 16px;
+        padding: 16px;
+        min-height: 52px;
+        border-radius: 12px;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .stat-card { padding: 14px; }
+    .stat-label { font-size: 10px; }
+    .stat-value { font-size: 22px; }
+    .stat-sub { font-size: 11px; }
+    
+    .tabs {
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding: 6px;
+        gap: 4px;
+        scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+        white-space: nowrap;
+        font-size: 13px;
+        padding: 10px 14px;
+        min-height: 40px;
+        flex-shrink: 0;
+    }
+    
+    .section { padding: 16px; }
+    .section h2 { font-size: 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
+    .section h2 .refresh-btn { 
+        width: 100%;
+        padding: 12px;
+        font-size: 13px;
+        min-height: 44px;
+    }
+    
+    .data-row {
+        padding: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .data-main { width: 100%; min-width: 0; }
+    .data-title { font-size: 14px; line-height: 1.4; }
+    .data-meta { font-size: 12px; line-height: 1.5; }
+    .wa-btn { 
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+        min-height: 44px;
+        font-size: 13px;
+    }
+    
+    .activity-item { padding: 12px; gap: 10px; }
+    .activity-icon { width: 34px; height: 34px; font-size: 16px; }
+    .activity-text { font-size: 13px; line-height: 1.4; }
+    .activity-time { font-size: 11px; }
+    
+    .badge { font-size: 10px; padding: 3px 8px; }
+    .status-select { min-height: 40px; font-size: 14px; }
+}
+
+@media (max-width: 400px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .stat-value { font-size: 20px; }
+    .login-prompt h1 { font-size: 18px; }
+}
+
+/* iOS safe area for notch/home indicator */
+@supports (padding: max(0px)) {
+    .navbar {
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+}
+
+/* Ensure tap targets are big enough */
+@media (hover: none) and (pointer: coarse) {
+    button, a, input[type="submit"], .tab { 
+        -webkit-tap-highlight-color: rgba(0,168,232,0.15);
+    }
+}
+
 </style>
 </head>
 <body>
@@ -89,8 +221,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 <div id="login-prompt" class="login-prompt" style="display:none;">
   <h1>🔒 Admin Access</h1>
   <p>Enter your admin credentials to access the control center.</p>
-  <input type="email" id="admin-email" placeholder="Email">
-  <input type="password" id="admin-password" placeholder="Password">
+  <input type="email" id="admin-email" placeholder="Email" autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false">
+  <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password">
   <button onclick="loginAdmin()">Sign In</button>
   <div id="login-status" style="margin-top:12px;font-size:13px;"></div>
 </div>
