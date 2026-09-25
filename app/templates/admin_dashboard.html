@@ -354,37 +354,51 @@ async function checkAuth() {
 }
 
 async function loginAdmin() {
-  var email = document.getElementById('admin-email').value;
-  var password = document.getElementById('admin-password').value;
-  var statusEl = document.getElementById('login-status');
-  statusEl.style.color = '#00a8e8';
-  statusEl.innerText = 'Signing in...';
-  try {
-    var res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email: email, password: password})
-    });
-    var data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Invalid credentials');
-    localStorage.setItem('token', data.access_token);
-    token = data.access_token;
-    // Test admin access
-    var adminTest = await fetch('/api/admin/stats', {
-      headers: {'Authorization': 'Bearer ' + token}
-    });
-    if (!adminTest.ok) {
-      statusEl.style.color = '#dc2626';
-      statusEl.innerText = '❌ This account is not an admin.';
-      localStorage.removeItem('token');
-      token = '';
-      return;
+    var email = document.getElementById('admin-email').value;
+    var password = document.getElementById('admin-password').value;
+    var statusEl = document.getElementById('login-status');
+    
+    if (!email || !password) {
+        statusEl.style.color = '#dc2626';
+        statusEl.innerText = 'Please enter email and password.';
+        return;
     }
-    window.location.reload();
-  } catch(e) {
-    statusEl.style.color = '#dc2626';
-    statusEl.innerText = '❌ ' + e.message;
-  }
+    
+    statusEl.style.color = '#00a8e8';
+    statusEl.innerText = 'Signing in...';
+    
+    try {
+        var res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, password: password})
+        });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Invalid credentials');
+        
+        localStorage.setItem('token', data.access_token);
+        token = data.access_token;
+        
+        // Verify admin access
+        var adminTest = await fetch('/api/admin/stats', {
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        if (!adminTest.ok) {
+            statusEl.style.color = '#dc2626';
+            statusEl.innerText = '❌ This account is not an admin.';
+            localStorage.removeItem('token');
+            token = '';
+            return;
+        }
+        
+        statusEl.style.color = '#22c55e';
+        statusEl.innerText = '✅ Welcome! Loading dashboard...';
+        setTimeout(function() { window.location.reload(); }, 600);
+        
+    } catch(e) {
+        statusEl.style.color = '#dc2626';
+        statusEl.innerText = '❌ ' + e.message;
+    }
 }
 
 function renderStats(s) {
