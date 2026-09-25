@@ -35,6 +35,60 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; }
 .error-card.show { display: block; }
 .example-vins { text-align: center; color: #999; font-size: 13px; margin-top: 20px; }
 .example-vins span { color: #00a8e8; cursor: pointer; text-decoration: underline; margin: 0 5px; }
+
+/* ========== MOBILE VIN TOOL ========== */
+@media (max-width: 768px) {
+    .navbar { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+    .logo { font-size: 15px; }
+    .nav-links a { font-size: 12px; margin-left: 12px; }
+    
+    .hero { padding: 40px 16px 60px; }
+    .hero h1 { font-size: 26px; line-height: 1.2; margin-bottom: 10px; }
+    .hero p { font-size: 14px; line-height: 1.5; padding: 0 8px; }
+    
+    .vin-input-box { flex-direction: column; padding: 10px; gap: 8px; }
+    .vin-input-box input { 
+        padding: 14px; 
+        font-size: 16px; 
+        letter-spacing: 2px; 
+        text-align: center;
+        -webkit-appearance: none;
+    }
+    .vin-input-box button { 
+        width: 100%; 
+        padding: 16px; 
+        font-size: 16px;
+        min-height: 52px;
+    }
+    
+    .example-vins { font-size: 12px; line-height: 2; padding: 0 8px; }
+    .example-vins span { display: inline-block; margin: 4px 4px; }
+    
+    .container { margin-top: 30px; padding: 0 12px; margin-bottom: 30px; }
+    .result-card { padding: 20px; border-radius: 12px; }
+    .result-header { flex-direction: row; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; }
+    .result-icon { width: 50px; height: 50px; font-size: 24px; }
+    .result-title { font-size: 20px; }
+    .result-subtitle { font-size: 12px; word-break: break-all; }
+    
+    .specs-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .spec { padding: 12px; }
+    .spec-label { font-size: 10px; }
+    .spec-value { font-size: 15px; }
+    
+    .parts-section { padding: 16px; }
+    .parts-title { font-size: 14px; }
+    .parts-list { gap: 8px; }
+    .part-tag { padding: 8px 14px; font-size: 13px; }
+    
+    .error-card { padding: 16px; font-size: 14px; }
+}
+
+@media (max-width: 400px) {
+    .specs-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 22px; }
+}
+
 </style>
 </head>
 <body>

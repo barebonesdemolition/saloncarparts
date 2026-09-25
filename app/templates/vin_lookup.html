@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>{{ app_name }} - Sierra Leone Auto Marketplace</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -104,6 +104,91 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 }
 @media (max-width:400px){
   .categories{grid-template-columns:repeat(2,1fr) !important;}
+}
+
+
+/* ========== MOBILE HOMEPAGE POLISH ========== */
+@media (max-width: 768px) {
+    .top-bar { padding: 8px 14px; font-size: 11px; flex-direction: column; gap: 6px; text-align: center; }
+    .top-bar > div { justify-content: center !important; display: flex; flex-wrap: wrap; gap: 10px; }
+    
+    .brand-bar { padding: 12px 14px; flex-direction: column; gap: 10px; }
+    .brand-logo { font-size: 17px; text-align: center; width: 100%; }
+    .brand-toggle { width: 100%; }
+    .brand-toggle button { padding: 10px 8px; font-size: 12px; flex: 1; min-height: 44px; }
+    .brand-actions { width: 100%; justify-content: center; gap: 10px; }
+    .brand-actions a { font-size: 12px; }
+    .list-btn { padding: 8px 12px !important; font-size: 12px !important; }
+    
+    .fitment-bar { padding: 12px 14px; flex-direction: column; gap: 10px; }
+    .fitment-left { width: 100%; }
+    .fitment-icon { width: 36px; height: 36px; }
+    .fitment-value { font-size: 13px !important; }
+    .fitment-controls { width: 100%; flex-direction: column; gap: 8px; }
+    .fitment-controls select { width: 100%; min-height: 44px; font-size: 14px; }
+    .fitment-controls button { min-height: 44px; font-size: 14px; }
+    
+    .hero { padding: 30px 14px 60px; }
+    .hero h1 { font-size: 24px; line-height: 1.2; }
+    .hero p { font-size: 14px; padding: 0 8px; }
+    .hero-badge { font-size: 10px; padding: 5px 12px; }
+    
+    .search-container { padding: 12px; }
+    .search-row { grid-template-columns: 1fr !important; gap: 8px !important; }
+    .search-row select, .search-row input, .search-row button {
+        padding: 12px !important;
+        font-size: 16px !important;
+        min-height: 48px;
+    }
+    .search-text-row input {
+        font-size: 16px !important;
+        padding: 12px 14px !important;
+        min-height: 48px;
+    }
+    
+    .categories { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; margin-top: -30px; padding: 0 10px; }
+    .category { padding: 14px 6px; }
+    .category-icon { font-size: 26px; margin-bottom: 4px; }
+    .cat-icon { width: 26px; height: 26px; margin-bottom: 4px; }
+    .category-label { font-size: 11px; }
+    
+    .results-section { padding: 0 12px; margin-top: 20px; margin-bottom: 40px; }
+    .results-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .results-title { font-size: 18px; }
+    .results-count { font-size: 12px; padding: 5px 12px; }
+    
+    .grid { grid-template-columns: 1fr !important; gap: 14px; }
+    .card { border-radius: 12px; }
+    .card-img { height: 180px; }
+    .card-body { padding: 14px; }
+    .card-title { font-size: 15px; line-height: 1.35; }
+    .card-price { font-size: 20px; }
+    .card-price-usd { font-size: 13px; }
+    .meta-tag { font-size: 11px; padding: 4px 8px; }
+    
+    .badge { font-size: 10px; padding: 4px 8px; }
+    
+    /* Modal mobile */
+    #modal-overlay > div { padding: 20px 16px; border-radius: 16px; }
+    #modal-title { font-size: 18px; }
+    
+    /* AI chat mobile */
+    #ai-chat-bubble { width: 56px; height: 56px; font-size: 26px; bottom: 18px; right: 18px; }
+    #ai-chat-panel { 
+        width: calc(100vw - 20px); 
+        right: 10px; 
+        bottom: 88px; 
+        max-height: calc(100vh - 120px);
+        height: 500px;
+    }
+    .chat-header { padding: 14px 16px; }
+    .chat-msg { font-size: 14px; padding: 10px 14px; }
+}
+
+@media (max-width: 400px) {
+    .hero h1 { font-size: 22px; }
+    .brand-logo { font-size: 15px; }
+    .categories { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 </style>
