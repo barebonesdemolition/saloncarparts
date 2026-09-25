@@ -10,10 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.db import get_db
+from app.config import get_settings
 from app import models
 
 # --- Config ---
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-in-production-salon-autozone")
+settings = get_settings()
+SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
