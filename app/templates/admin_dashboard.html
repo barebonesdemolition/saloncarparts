@@ -219,6 +219,54 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
     }
 }
 
+
+/* Mobile-optimized admin login */
+@media (max-width: 768px) {
+    .login-prompt {
+        margin: 20px 16px;
+        padding: 32px 20px;
+        border-radius: 16px;
+    }
+    .login-prompt h1 {
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+    .login-prompt p {
+        font-size: 13px;
+        margin-bottom: 24px;
+        line-height: 1.5;
+    }
+    .login-prompt input {
+        font-size: 16px !important;
+        padding: 14px !important;
+        min-height: 48px;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    #admin-password {
+        padding-right: 48px !important;
+    }
+    #admin-pw-toggle {
+        font-size: 20px !important;
+        padding: 10px !important;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    .login-prompt button[onclick*="loginAdmin"] {
+        font-size: 16px !important;
+        padding: 16px !important;
+        min-height: 52px;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 400px) {
+    .login-prompt {
+        padding: 24px 16px;
+    }
+    .login-prompt h1 { font-size: 18px; }
+}
+
 </style>
 </head>
 <body>
@@ -237,16 +285,45 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 <div id="login-prompt" class="login-prompt" style="display:none;">
   <h1>🔒 Admin Access</h1>
   <p>Enter your admin credentials to access the control center.</p>
-  <input type="email" id="admin-email" placeholder="Email" autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false">
-  <div style="position:relative;">
-                <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:12px 44px 12px 12px;border:1px solid #e0e6ed;border-radius:8px;font-size:14px;font-family:inherit;">
-                <button type="button" onclick="togglePassword('admin-password', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:6px;color:#64748b;font-size:18px;" aria-label="Show password">👁️</button>
-            </div>
-  <button onclick="loginAdmin()">Sign In</button>
-  <div id="login-status" style="margin-top:12px;font-size:13px;"></div>
+  
+  <div style="text-align:left;max-width:400px;margin:0 auto;">
+    <label for="admin-email" style="display:block;font-size:13px;color:#475569;font-weight:600;margin-bottom:6px;">Email</label>
+    <input 
+      type="email" 
+      id="admin-email" 
+      placeholder="admin@salonautozone.com" 
+      autocomplete="email" 
+      inputmode="email" 
+      autocapitalize="off" 
+      autocorrect="off" 
+      spellcheck="false" 
+      style="width:100%;padding:14px;border:1px solid #e0e6ed;border-radius:10px;font-size:16px;font-family:inherit;box-sizing:border-box;outline:none;">
+    
+    <label for="admin-password" style="display:block;font-size:13px;color:#475569;font-weight:600;margin-bottom:6px;margin-top:14px;">Password</label>
+    <div style="position:relative;width:100%;">
+      <input 
+        type="password" 
+        id="admin-password" 
+        placeholder="Your password" 
+        autocomplete="current-password" 
+        style="width:100%;padding:14px 48px 14px 14px;border:1px solid #e0e6ed;border-radius:10px;font-size:16px;font-family:inherit;box-sizing:border-box;outline:none;">
+      <button 
+        type="button" 
+        id="admin-pw-toggle" 
+        onclick="togglePassword('admin-password', this)" 
+        style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:8px;font-size:18px;line-height:1;color:#64748b;" 
+        aria-label="Show password">👁️</button>
+    </div>
+  </div>
+  
+  <button 
+    onclick="loginAdmin()" 
+    style="width:100%;max-width:400px;margin-top:20px;padding:16px;background:#00a8e8;color:white;border:none;border-radius:12px;font-weight:bold;font-size:16px;cursor:pointer;font-family:inherit;min-height:52px;">
+    Sign In
+  </button>
+  <div id="login-status" style="margin-top:14px;font-size:14px;text-align:center;font-weight:600;color:#64748b;"></div>
 </div>
 
-<!-- Main dashboard (shown if authenticated) -->
 <div id="dashboard" class="container" style="display:none;">
   <div class="stats-grid" id="stats-grid">
     <div class="loading" style="grid-column:1/-1;">Loading stats...</div>
