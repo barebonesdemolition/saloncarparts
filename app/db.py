@@ -8,7 +8,7 @@ settings = get_settings()
 # Read DATABASE_URL from environment, fall back to SQLite for local dev
 DATABASE_URL = os.getenv("DATABASE_URL", settings.DATABASE_URL)
 
-# Render sometimes provides a postgres:// URL that needs to become postgresql+asyncpg://
+# Render provides postgres:// URLs that need to become postgresql+asyncpg://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
 elif DATABASE_URL.startswith("postgresql://") and "+asyncpg" not in DATABASE_URL:
