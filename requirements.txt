@@ -12,3 +12,4 @@ pydantic
 python-dotenv
 email-validator
 google-generativeai
+asyncpg
