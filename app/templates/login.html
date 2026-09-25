@@ -29,6 +29,78 @@ input:focus { outline: none; border-color: #00a8e8; }
 .role-opt { display:flex; align-items:center; gap:6px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; cursor:pointer; }
 .role-opt:hover { background:#f0f9ff; border-color:#00a8e8; }
 .role-opt input { width:16px; height:16px; }
+
+/* ========== MOBILE LOGIN OPTIMIZATIONS ========== */
+@media (max-width: 768px) {
+    body {
+        padding: 12px;
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+    .login-card {
+        padding: 28px 20px;
+        border-radius: 16px;
+        max-width: 100%;
+    }
+    .logo { font-size: 22px; }
+    h2 { font-size: 20px; margin: 16px 0 20px; }
+    .tabs button { padding: 12px; font-size: 14px; min-height: 44px; }
+    label { font-size: 14px; margin-top: 14px; }
+    input {
+        font-size: 16px;  /* Prevents iOS auto-zoom */
+        padding: 14px 16px;
+        min-height: 48px;
+        border-radius: 10px;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    .submit-btn {
+        font-size: 16px;
+        padding: 16px;
+        min-height: 52px;
+        border-radius: 12px;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    .role-opt {
+        padding: 12px 10px;
+        font-size: 13px;
+        min-height: 48px;
+        border-radius: 10px;
+    }
+    .role-opt input { width: 20px; height: 20px; }
+    .status { font-size: 14px; line-height: 1.5; }
+    .back-link { font-size: 14px; margin-top: 24px; }
+}
+
+@media (max-width: 400px) {
+    .login-card { padding: 24px 16px; }
+    .logo { font-size: 20px; }
+    h2 { font-size: 18px; }
+    .role-opt { font-size: 12px; padding: 10px 8px; }
+    #reg-roles-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Loading spinner animation */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Cold-start friendly loading state */
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 </style>
 </head>
 <body>
@@ -81,33 +153,204 @@ document.getElementById('register-form').classList.toggle('hidden', tab !== 'reg
 document.getElementById('form-title').innerText = tab === 'login' ? 'Welcome Back' : 'Create Your Account';
 }
 async function handleLogin(e) {
-e.preventDefault();
-const s = document.getElementById('login-status');
-s.className = 'status'; s.innerText = 'Logging in...';
-try {
-const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('login-email').value, password: document.getElementById('login-password').value }) });
-const data = await res.json();
-if (!res.ok) throw new Error(data.detail || 'Login failed');
-localStorage.setItem('token', data.access_token);
-s.className = 'status success'; s.innerText = '✅ Logged in! Redirecting...';
-setTimeout(() => window.location.href = '/dashboard', 800);
+    e.preventDefault();
+    const s = document.getElementById('login-status');
+    const btn = e.target.querySelector('.submit-btn');
+    
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Signing in...';
+    
+    s.className = 'status';
+    s.style.color = '#00a8e8';
+    s.innerText = 'Connecting...';
+    
+    function fetchWithTimeout(url, options, timeout = 90000) {
+        return Promise.race([
+            fetch(url, options),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
+        ]);
+    }
+    
+    try {
+        let res;
+        try {
+            res = await fetchWithTimeout('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email: document.getElementById('login-email').value, 
+                    password: document.getElementById('login-password').value 
+                })
+            });
+        } catch (err) {
+            if (err.message === 'timeout') {
+                s.style.color = '#f59e0b';
+                s.innerText = '⏳ Server waking up... retrying...';
+                res = await fetchWithTimeout('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: document.getElementById('login-email').value, 
+                        password: document.getElementById('login-password').value 
+                    })
+                }, 60000);
+            } else {
+                throw err;
+            }
+        }
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Login failed');
+        
+        localStorage.setItem('token', data.access_token);
+        
+        try {
+            const userRes = await fetchWithTimeout('/api/auth/me', {
+                headers: { 'Authorization': 'Bearer ' + data.access_token }
+            }, 30000);
+            if (userRes.ok) {
+                const userData = await userRes.json();
+                localStorage.setItem('userInfo', JSON.stringify(userData));
+                if (userData.is_admin) {
+                    s.style.color = '#22c55e';
+                    s.innerText = '✅ Admin logged in! Redirecting...';
+                    setTimeout(function() { window.location.href = '/admin-panel-x9k2m7'; }, 700);
+                    return;
+                }
+            }
+        } catch (err) { /* ignore */ }
+        
+        s.style.color = '#22c55e';
+        s.innerText = '✅ Logged in! Redirecting...';
+        setTimeout(function() { window.location.href = '/dashboard'; }, 700);
+        
+    } catch (err) {
+        s.style.color = '#dc2626';
+        s.innerText = '❌ ' + (err.message === 'timeout' ? 'Server busy. Try again.' : err.message);
+        btn.disabled = false;
+        btn.innerHTML = 'Login';
+    }
 } catch (err) { s.className = 'status error'; s.innerText = '❌ ' + err.message; }
 }
 async function handleRegister(e) {
-e.preventDefault();
-const s = document.getElementById('register-status');
-s.className = 'status'; s.innerText = 'Creating account...';
-const payload = { full_name: document.getElementById('reg-fullname').value, email: document.getElementById('reg-email').value, phone: document.getElementById('reg-phone').value, password: document.getElementById('reg-password').value, is_vendor: document.getElementById('reg-vendor').checked };
-try {
-const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-const data = await res.json();
-if (!res.ok) throw new Error(data.detail || 'Registration failed');
-s.className = 'status success'; s.innerText = '✅ Account created! Logging in...';
-const loginRes = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: payload.email, password: payload.password }) });
-const loginData = await loginRes.json();
-if (loginRes.ok) { localStorage.setItem('token', loginData.access_token); setTimeout(() => window.location.href = '/dashboard', 800); }
+    e.preventDefault();
+    const s = document.getElementById('register-status');
+    const btn = e.target.querySelector('.submit-btn');
+    
+    // Prevent double-submit
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Creating account...';
+    
+    s.className = 'status'; 
+    s.style.color = '#00a8e8';
+    s.innerText = 'Connecting to server...';
+    
+    const payload = {
+        full_name: document.getElementById('reg-fullname').value,
+        email: document.getElementById('reg-email').value,
+        phone: document.getElementById('reg-phone').value,
+        password: document.getElementById('reg-password').value,
+        is_vendor: Array.from(document.querySelectorAll('.role-check:checked')).some(function(c){return ["seller","vendor","dealership","importer"].indexOf(c.value) > -1;}),
+        roles: Array.from(document.querySelectorAll('.role-check:checked')).map(function(c){return c.value;}).join(",") || "browser"
+    };
+    
+    // Helper: fetch with timeout
+    function fetchWithTimeout(url, options, timeout = 90000) {
+        return Promise.race([
+            fetch(url, options),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
+        ]);
+    }
+    
+    try {
+        // Step 1: Register (with retry for cold start)
+        let regRes;
+        try {
+            regRes = await fetchWithTimeout('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            if (err.message === 'timeout') {
+                s.style.color = '#f59e0b';
+                s.innerText = '⏳ Server is waking up... retrying (this takes ~30 sec first time)';
+                // Retry once more
+                regRes = await fetchWithTimeout('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }, 60000);
+            } else {
+                throw err;
+            }
+        }
+        
+        const regData = await regRes.json();
+        
+        // Handle "already registered" — try to log in instead
+        if (!regRes.ok) {
+            if (regData.detail && regData.detail.toLowerCase().includes('already')) {
+                s.style.color = '#f59e0b';
+                s.innerText = '⚠️ Email already registered. Logging in...';
+                // fall through to login
+            } else {
+                throw new Error(regData.detail || 'Registration failed');
+            }
+        } else {
+            s.style.color = '#00a8e8';
+            s.innerText = '✅ Account created! Logging you in...';
+        }
+        
+        // Step 2: Login
+        const loginRes = await fetchWithTimeout('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: payload.email, password: payload.password })
+        });
+        const loginData = await loginRes.json();
+        
+        if (!loginRes.ok) {
+            throw new Error(loginData.detail || 'Login failed');
+        }
+        
+        localStorage.setItem('token', loginData.access_token);
+        
+        // Step 3: Get user info
+        try {
+            const userRes = await fetchWithTimeout('/api/auth/me', {
+                headers: { 'Authorization': 'Bearer ' + loginData.access_token }
+            }, 30000);
+            if (userRes.ok) {
+                const userData = await userRes.json();
+                localStorage.setItem('userInfo', JSON.stringify(userData));
+            }
+        } catch (err) {
+            // Ignore user info fetch errors — proceed anyway
+        }
+        
+        s.style.color = '#22c55e';
+        s.innerText = '🎉 Welcome! Redirecting...';
+        btn.innerHTML = '🎉 Success!';
+        
+        setTimeout(function() { window.location.href = '/welcome'; }, 700);
+        
+    } catch (err) {
+        s.style.color = '#dc2626';
+        s.innerText = '❌ ' + (err.message === 'timeout' ? 'Server busy. Please try again in 30 seconds.' : err.message);
+        btn.disabled = false;
+        btn.innerHTML = 'Create Account';
+    }
 } catch (err) { s.className = 'status error'; s.innerText = '❌ ' + err.message; }
 }
+
+// Warm up the server in the background (helps with Render cold starts)
+(function warmup() {
+    fetch('/health').catch(function(){});
+})();
+
 </script>
 </body>
 </html>
