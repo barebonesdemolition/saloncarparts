@@ -203,6 +203,22 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
     }
 }
 
+
+/* Password toggle button mobile optimization */
+@media (max-width: 768px) {
+    #admin-password {
+        font-size: 16px !important;
+        padding: 14px 48px 14px 14px !important;
+        min-height: 48px;
+    }
+    button[onclick*="togglePassword"] {
+        font-size: 20px !important;
+        padding: 10px !important;
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -222,7 +238,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
   <h1>🔒 Admin Access</h1>
   <p>Enter your admin credentials to access the control center.</p>
   <input type="email" id="admin-email" placeholder="Email" autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false">
-  <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password">
+  <div style="position:relative;">
+                <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:12px 44px 12px 12px;border:1px solid #e0e6ed;border-radius:8px;font-size:14px;font-family:inherit;">
+                <button type="button" onclick="togglePassword('admin-password', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:6px;color:#64748b;font-size:18px;" aria-label="Show password">👁️</button>
+            </div>
   <button onclick="loginAdmin()">Sign In</button>
   <div id="login-status" style="margin-top:12px;font-size:13px;"></div>
 </div>
@@ -264,6 +283,21 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 <script>
 var token = localStorage.getItem('token') || '';
 var currentTab = 'activity';
+
+
+function togglePassword(fieldId, btn) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    if (field.type === 'password') {
+        field.type = 'text';
+        btn.innerText = '🙈';
+        btn.setAttribute('aria-label', 'Hide password');
+    } else {
+        field.type = 'password';
+        btn.innerText = '👁️';
+        btn.setAttribute('aria-label', 'Show password');
+    }
+}
 
 function logout() {
   localStorage.removeItem('token');
