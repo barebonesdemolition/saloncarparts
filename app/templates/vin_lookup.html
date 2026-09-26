@@ -1444,20 +1444,35 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function handlePhotoSelect(e, type) {
+  // Prevent any default browser behavior
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+  
   if (!e.target.files || e.target.files.length === 0) return;
   var file = e.target.files[0];
   
   var previewEl = document.getElementById(type + '-photo-preview');
   var hiddenInput = document.getElementById(type + '-image-url');
   
-  // Show local preview immediately
+  if (!previewEl || !hiddenInput) {
+    alert('Photo preview not found. Please reload the page.');
+    return;
+  }
+  
+  // Show preview immediately with local file
   var objectUrl = URL.createObjectURL(file);
-  previewEl.innerHTML = '<div style="position:relative;"><img src="' + objectUrl + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;"><div style="text-align:center;color:#00a8e8;font-size:12px;margin-top:6px;font-weight:600;">📤 Uploading...</div></div>';
+  previewEl.innerHTML = '<div style="position:relative;"><img src="' + objectUrl + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;"><div style="text-align:center;color:#00a8e8;font-size:13px;margin-top:8px;font-weight:700;">📤 Uploading to server...</div></div>';
   
-  // Compress the image before upload (helps with large phone photos)
-  var compressedFile = await compressImage(file, 1600, 0.85);
+  // Compress image
+  var compressedFile;
+  try {
+    compressedFile = await compressImage(file, 1600, 0.85);
+  } catch (err) {
+    compressedFile = file;  // Fallback: upload original if compression fails
+  }
   
-  // Upload to server
+  // Upload
   var fd = new FormData();
   fd.append('file', compressedFile);
   var token = localStorage.getItem('token');
@@ -1477,13 +1492,12 @@ async function handlePhotoSelect(e, type) {
     var data = await res.json();
     hiddenInput.value = data.url;
     
-    previewEl.innerHTML = '<div style="position:relative;"><img src="' + objectUrl + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;"><div style="text-align:center;color:#22c55e;font-size:12px;margin-top:6px;font-weight:600;">✅ Photo uploaded</div></div>';
+    previewEl.innerHTML = '<div style="position:relative;"><img src="' + objectUrl + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;"><div style="text-align:center;color:#22c55e;font-size:13px;margin-top:8px;font-weight:700;">✅ Photo uploaded — ready to publish</div></div>';
     
   } catch (err) {
-    previewEl.innerHTML = '<div style="text-align:center;color:#dc2626;font-size:12px;padding:12px;">❌ Upload failed: ' + err.message + '<br><button type="button" onclick="this.parentElement.parentElement.innerHTML=\'\';" style="margin-top:8px;background:#dc2626;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Try again</button></div>';
+    previewEl.innerHTML = '<div style="text-align:center;color:#dc2626;font-size:13px;padding:12px;background:#fef2f2;border-radius:8px;">❌ Upload failed: ' + err.message + '<br><br><button type="button" onclick="document.getElementById(\'' + type + '-photo-input\').click()" style="background:#dc2626;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Try Again</button></div>';
   }
 }
-
 // Client-side image compression
 async function compressImage(file, maxWidth, quality) {
   return new Promise(function(resolve) {
@@ -1501,12 +1515,15 @@ async function compressImage(file, maxWidth, quality) {
         var ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(function(blob) {
-          var compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+          if (!blob) return resolve(file);
+          var compressed = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
           resolve(compressed);
         }, 'image/jpeg', quality);
       };
+      img.onerror = function() { resolve(file); };
       img.src = e.target.result;
     };
+    reader.onerror = function() { resolve(file); };
     reader.readAsDataURL(file);
   });
 }
