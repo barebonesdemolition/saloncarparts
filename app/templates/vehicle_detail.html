@@ -178,10 +178,23 @@ async function submitInquiry(e) {
       throw new Error(err.detail || 'Failed to send');
     }
     statusEl.style.color = '#22c55e';
-    statusEl.innerHTML = '✅ Your inquiry has been sent!<br>The seller will contact you shortly.';
+    statusEl.innerHTML = '✅ Your inquiry has been sent!<br>Seller will contact you shortly.';
+    
+    // Notify admin via WhatsApp
+    var msg = 'Hello Salon AutoZone!\n\n'
+            + '✅ NEW INQUIRY\n\n'
+            + '👤 Buyer: ' + data.get('buyer_name') + '\n'
+            + '📱 Phone: ' + data.get('buyer_phone') + '\n'
+            + '💬 Message: ' + (data.get('buyer_message') || 'No message') + '\n\n'
+            + 'Listing: ' + (currentVehicle ? currentVehicle.title : 'Part listing');
+    
+    var waUrl = 'https://wa.me/23276570104?text=' + encodeURIComponent(msg);
+    
     setTimeout(function() {
       closeInquiryModal();
-    }, 2500);
+      // Open WhatsApp notification
+      window.open(waUrl, '_blank');
+    }, 2000);
   } catch (err) {
     statusEl.style.color = '#dc2626';
     statusEl.innerText = '❌ ' + err.message;

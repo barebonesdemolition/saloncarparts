@@ -42,6 +42,13 @@ h1{font-size:28px;color:#0b1e3a;margin-bottom:8px;line-height:1.2}
   </div>
   <a href="/" class="btn btn-primary">Explore Marketplace →</a>
   <a href="/dashboard" class="btn btn-secondary">Go to My Dashboard</a>
+  
+  <div style="margin-top:20px;padding:16px;background:#f0f9ff;border-radius:12px;border-left:4px solid #00a8e8;text-align:left;">
+    <div style="font-size:13px;color:#0369a1;font-weight:700;margin-bottom:8px;">📱 Get Notified Instantly</div>
+    <div style="font-size:13px;color:#475569;line-height:1.5;margin-bottom:12px;">Tap below to send us a WhatsApp message so we can welcome you personally and set up your account faster.</div>
+    <a id="notify-admin-btn" href="#" onclick="notifyAdmin(event)" style="display:block;background:#25D366;color:white;text-align:center;padding:14px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;min-height:48px;">💬 Message Salon AutoZone on WhatsApp</a>
+  </div>
+
   <div class="footer">Signed in as <strong id="user-email">your account</strong></div>
 </div>
 <script>
@@ -68,6 +75,28 @@ h1{font-size:28px;color:#0b1e3a;margin-bottom:8px;line-height:1.2}
     }
   } catch(e){}
 })();
+
+function notifyAdmin(e) {
+    e.preventDefault();
+    var userInfo = {};
+    try { userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}'); } catch(err) {}
+    
+    var name = userInfo.full_name || 'New user';
+    var email = userInfo.email || '';
+    var phone = userInfo.phone || '';
+    var roles = userInfo.roles || 'buyer';
+    
+    var msg = 'Hello Salon AutoZone! I just registered on your marketplace.\n\n'
+            + '👤 Name: ' + name + '\n'
+            + '📧 Email: ' + email + '\n'
+            + '📱 Phone: ' + phone + '\n'
+            + '🎯 Roles: ' + roles + '\n\n'
+            + 'Please activate my account.';
+    
+    var url = 'https://wa.me/23276570104?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+}
+
 </script>
 </body>
 </html>

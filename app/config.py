@@ -25,6 +25,7 @@ class Settings:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "salon-autozone-secret-change-in-prod")
     # Read GEMINI_API_KEY from environment (works for both AIzaSy and AQ. formats)
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+    ADMIN_WHATSAPP = os.getenv("ADMIN_WHATSAPP", "23276570104")
 
 
 def get_settings():
