@@ -1425,6 +1425,92 @@ function listCarFromIdentify(make, model, yearRange) {
   }, 100);
 }
 
+
+// ========== PHOTO UPLOAD HANDLERS ==========
+document.addEventListener('DOMContentLoaded', function() {
+  var vehicleInput = document.getElementById('vehicle-photo-input');
+  var partInput = document.getElementById('part-photo-input');
+  
+  if (vehicleInput) {
+    vehicleInput.addEventListener('change', function(e) {
+      handlePhotoSelect(e, 'vehicle');
+    });
+  }
+  if (partInput) {
+    partInput.addEventListener('change', function(e) {
+      handlePhotoSelect(e, 'part');
+    });
+  }
+});
+
+async function handlePhotoSelect(e, type) {
+  if (!e.target.files || e.target.files.length === 0) return;
+  var file = e.target.files[0];
+  
+  var previewEl = document.getElementById(type + '-photo-preview');
+  var hiddenInput = document.getElementById(type + '-image-url');
+  
+  // Show local preview immediately
+  var objectUrl = URL.createObjectURL(file);
+  previewEl.innerHTML = '<div style="position:relative;"><img src="' + objectUrl + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;"><div style="text-align:center;color:#00a8e8;font-size:12px;margin-top:6px;font-weight:600;">📤 Uploading...</div></div>';
+  
+  // Compress the image before upload (helps with large phone photos)
+  var compressedFile = await compressImage(file, 1600, 0.85);
+  
+  // Upload to server
+  var fd = new FormData();
+  fd.append('file', compressedFile);
+  var token = localStorage.getItem('token');
+  
+  try {
+    var res = await fetch('/api/upload/', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: fd
+    });
+    
+    if (!res.ok) {
+      var err = await res.json();
+      throw new Error(err.detail || 'Upload failed');
+    }
+    
+    var data = await res.json();
+    hiddenInput.value = data.url;
+    
+    previewEl.innerHTML = '<div style="position:relative;"><img src="' + objectUrl + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;"><div style="text-align:center;color:#22c55e;font-size:12px;margin-top:6px;font-weight:600;">✅ Photo uploaded</div></div>';
+    
+  } catch (err) {
+    previewEl.innerHTML = '<div style="text-align:center;color:#dc2626;font-size:12px;padding:12px;">❌ Upload failed: ' + err.message + '<br><button type="button" onclick="this.parentElement.parentElement.innerHTML=\'\';" style="margin-top:8px;background:#dc2626;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Try again</button></div>';
+  }
+}
+
+// Client-side image compression
+async function compressImage(file, maxWidth, quality) {
+  return new Promise(function(resolve) {
+    // If file is small, return as-is
+    if (file.size < 500 * 1024) return resolve(file);
+    
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var ratio = Math.min(1, maxWidth / img.width);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob) {
+          var compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+          resolve(compressed);
+        }, 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 </script>
 </body>
 </html>
