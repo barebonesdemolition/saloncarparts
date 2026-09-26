@@ -945,27 +945,88 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleIdentifyUpload() {
   if (!identifySelectedFile) return;
   var statusEl = document.getElementById('identify-status');
+  var file = identifySelectedFile;
+  
+  // Check file size
+  if (file.size > 8 * 1024 * 1024) {
+    statusEl.style.color = '#dc2626';
+    statusEl.innerText = '❌ Image too large (max 8 MB). Please use a smaller photo.';
+    return;
+  }
+  
+  // Show progress
+  var startTime = Date.now();
   statusEl.style.color = '#00a8e8';
-  statusEl.innerHTML = '⏳ Analyzing your photo... This takes 5-15 seconds';
+  statusEl.innerHTML = '<div style="padding:10px;"><div style="font-size:32px;margin-bottom:8px;">🔍</div><div style="font-weight:700;">Analyzing your photo...</div><div style="font-size:13px;color:#64748b;margin-top:6px;" id="identify-progress">Starting up (0s)</div></div>';
+  
+  // Progress updater (runs every second)
+  var progressInterval = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - startTime) / 1000);
+    var progressEl = document.getElementById('identify-progress');
+    if (progressEl) {
+      if (elapsed < 10) {
+        progressEl.innerText = 'Uploading photo... (' + elapsed + 's)';
+      } else if (elapsed < 25) {
+        progressEl.innerText = 'AI is analyzing... (' + elapsed + 's)';
+      } else if (elapsed < 50) {
+        progressEl.innerText = 'Still working — this can take up to 60s on first use (' + elapsed + 's)';
+      } else {
+        progressEl.innerText = 'Almost done... (' + elapsed + 's)';
+      }
+    }
+  }, 1000);
+  
   var fd = new FormData();
-  fd.append('file', identifySelectedFile);
+  fd.append('file', file);
   var token = localStorage.getItem('token');
+  
+  // Use manual timeout with AbortController
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 120000);  // 2 minutes
+  
   try {
     var res = await fetch('/api/identify/car', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token },
-      body: fd
+      body: fd,
+      signal: controller.signal
     });
-    var data = await res.json();
-    if (!res.ok) {
+    
+    clearTimeout(timeoutId);
+    clearInterval(progressInterval);
+    
+    // Handle non-JSON responses
+    var responseText = await res.text();
+    var data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (err) {
       statusEl.style.color = '#dc2626';
-      statusEl.innerText = '❌ ' + (data.detail || 'Identification failed');
+      statusEl.innerHTML = '<div style="padding:10px;"><div style="font-size:32px;margin-bottom:8px;">⚠️</div><div style="font-weight:700;">Server error</div><div style="font-size:13px;color:#64748b;margin-top:6px;">Please try again. If it keeps failing, the server may be waking up — wait 30 sec and retry.</div></div>';
       return;
     }
+    
+    if (!res.ok) {
+      statusEl.style.color = '#dc2626';
+      var errMsg = data.detail || 'Identification failed';
+      if (res.status === 401) {
+        errMsg = 'Please log in again (session expired)';
+      }
+      statusEl.innerHTML = '<div style="padding:10px;"><div style="font-size:32px;margin-bottom:8px;">❌</div><div style="font-weight:700;">' + errMsg + '</div></div>';
+      return;
+    }
+    
     renderIdentifyResult(data.identification);
+    
   } catch (err) {
+    clearTimeout(timeoutId);
+    clearInterval(progressInterval);
     statusEl.style.color = '#dc2626';
-    statusEl.innerText = '❌ Network error. Please try again.';
+    if (err.name === 'AbortError') {
+      statusEl.innerHTML = '<div style="padding:10px;"><div style="font-size:32px;margin-bottom:8px;">⏱️</div><div style="font-weight:700;">Request timed out</div><div style="font-size:13px;color:#64748b;margin-top:6px;">The AI took too long. Please try again with a smaller photo.</div></div>';
+    } else {
+      statusEl.innerHTML = '<div style="padding:10px;"><div style="font-size:32px;margin-bottom:8px;">🌐</div><div style="font-weight:700;">Network error</div><div style="font-size:13px;color:#64748b;margin-top:6px;">Check your internet connection and try again.</div></div>';
+    }
   }
 }
 
