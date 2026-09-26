@@ -347,216 +347,38 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 </div>
 
 
-<!-- IDENTIFY CAR FEATURE -->
+
+</div>
+
+
+
+<!-- IDENTIFY CAR FEATURE BUTTON -->
 <div style="max-width:800px;margin:14px auto 0;padding:0 12px;">
-  <button onclick="openIdentifyCar()" type="button" style="width:100%;background:linear-gradient(135deg,#00a8e8,#0077b6);color:white;border:none;padding:14px 20px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 20px rgba(0,168,232,0.35);min-height:52px;">
+  <button type="button" onclick="openIdentifyCar()" style="width:100%;background:linear-gradient(135deg,#00a8e8,#0077b6);color:white;border:none;padding:14px 20px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 20px rgba(0,168,232,0.35);min-height:52px;">
     <span style="font-size:20px;">📸</span> Identify Your Car from a Photo — AI Powered
   </button>
 </div>
 
+<!-- IDENTIFY CAR MODAL -->
 <div id="identify-car-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
 <div style="background:white;border-radius:16px;max-width:520px;width:100%;padding:24px;position:relative;max-height:90vh;overflow-y:auto;">
   <span onclick="closeIdentifyCar()" style="position:absolute;top:14px;right:18px;font-size:28px;cursor:pointer;color:#888;">&times;</span>
-  
   <div id="identify-stage-upload">
     <h2 style="color:#0b1e3a;margin-bottom:8px;font-size:20px;">📸 Identify Your Car</h2>
     <p style="color:#64748b;font-size:14px;margin-bottom:20px;line-height:1.5;">Take a clear photo of the front or side of the car. AI will tell you the make, model, year, and estimated price in Sierra Leone Leones.</p>
-    
-    <input type="file" id="identify-file-input" accept="image/*" capture="environment" style="display:none;" onchange="handleIdentifyFileSelected(event)">
-    
-    <button onclick="triggerIdentifyInput()" style="width:100%;background:#f0f4f8;color:#0b1e3a;border:2px dashed #cbd5e0;padding:32px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:180px;">
+    <input type="file" id="identify-file-input" accept="image/*" capture="environment" style="display:none;">
+    <button type="button" onclick="document.getElementById('identify-file-input').click()" style="width:100%;background:#f0f4f8;color:#0b1e3a;border:2px dashed #cbd5e0;padding:32px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:180px;">
       <span style="font-size:48px;">📷</span>
       <span>Tap to Take Photo or Upload</span>
       <span style="font-size:12px;color:#94a3b8;font-weight:normal;">JPG, PNG, or WEBP • Max 8 MB</span>
     </button>
-    
     <div id="identify-status" style="margin-top:16px;text-align:center;font-size:14px;font-weight:600;line-height:1.5;"></div>
   </div>
-  
   <div id="identify-stage-result" style="display:none;">
     <div id="identify-result-content"></div>
   </div>
 </div>
 </div>
-
-<script>
-var identifySelectedFile = null;
-
-function openIdentifyCar() {
-  var token = localStorage.getItem('token');
-  if (!token) {
-    alert('Please log in to use AI car identification.');
-    window.location.href = '/login';
-    return;
-  }
-  document.getElementById('identify-car-modal').style.display = 'flex';
-  document.getElementById('identify-stage-upload').style.display = 'block';
-  document.getElementById('identify-stage-result').style.display = 'none';
-  document.getElementById('identify-status').innerHTML = '';
-  identifySelectedFile = null;
-}
-
-function closeIdentifyCar() {
-  document.getElementById('identify-car-modal').style.display = 'none';
-  document.getElementById('identify-file-input').value = '';
-  identifySelectedFile = null;
-}
-
-document.getElementById('identify-file-input').addEventListener('change', function(e) {
-  if (e.target.files.length > 0) {
-    identifySelectedFile = e.target.files[0];
-    handleIdentifyUpload();
-  }
-});
-
-async function handleIdentifyUpload() {
-  if (!identifySelectedFile) return;
-  
-  var statusEl = document.getElementById('identify-status');
-  statusEl.style.color = '#00a8e8';
-  statusEl.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #e0e6ed;border-top-color:#00a8e8;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px;"></span> Analyzing your photo... This takes 5-15 seconds';
-  
-  var fd = new FormData();
-  fd.append('file', identifySelectedFile);
-  
-  var token = localStorage.getItem('token');
-  
-  try {
-    var res = await fetch('/api/identify/car', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: fd
-    });
-    
-    var data = await res.json();
-    
-    if (!res.ok) {
-      statusEl.style.color = '#dc2626';
-      statusEl.innerText = '❌ ' + (data.detail || 'Identification failed');
-      return;
-    }
-    
-    renderIdentifyResult(data.identification);
-    
-  } catch (err) {
-    statusEl.style.color = '#dc2626';
-    statusEl.innerText = '❌ Network error. Please try again.';
-  }
-}
-
-function renderIdentifyResult(car) {
-  var html = '';
-  
-  if (!car.make || !car.model) {
-    html = '<div style="text-align:center;padding:20px;"><div style="font-size:48px;margin-bottom:12px;">😕</div><h3 style="color:#0b1e3a;margin-bottom:8px;">Could Not Identify</h3><p style="color:#64748b;font-size:14px;">The AI could not confidently identify this car. Please try a clearer photo of the front or side.</p><button onclick="closeIdentifyCar()" style="margin-top:16px;background:#00a8e8;color:white;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;">Try Another Photo</button></div>';
-  } else {
-    var priceRange = '';
-    if (car.estimated_price_sll_low && car.estimated_price_sll_high) {
-      priceRange = 'SLL ' + Math.round(car.estimated_price_sll_low).toLocaleString() + ' – ' + Math.round(car.estimated_price_sll_high).toLocaleString();
-    }
-    
-    var partsList = '';
-    if (car.common_parts && car.common_parts.length > 0) {
-      partsList = car.common_parts.map(function(p) {
-        return '<span style="display:inline-block;background:#f0f9ff;color:#0369a1;padding:6px 12px;border-radius:16px;font-size:12px;font-weight:600;margin:4px 4px 0 0;">' + p + '</span>';
-      }).join('');
-    }
-    
-    html = 
-      '<div style="text-align:center;margin-bottom:20px;">' +
-      '<div style="font-size:48px;margin-bottom:8px;">🚗</div>' +
-      '<h2 style="color:#0b1e3a;font-size:22px;margin-bottom:4px;">' + car.make + ' ' + car.model + '</h2>' +
-      '<div style="color:#64748b;font-size:14px;">' + (car.year_range || '') + ' • ' + (car.body_type || '') + ' • ' + (car.color || '') + '</div>' +
-      '</div>' +
-      
-      (priceRange ? '<div style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);padding:16px;border-radius:12px;text-align:center;margin-bottom:16px;"><div style="font-size:11px;color:#166534;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Estimated Price in Sierra Leone</div><div style="font-size:20px;color:#166534;font-weight:900;">' + priceRange + '</div></div>' : '') +
-      
-      (partsList ? '<div style="margin-bottom:16px;"><div style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Common Parts to Check</div><div>' + partsList + '</div></div>' : '') +
-      
-      (car.description ? '<div style="background:#f8fafc;padding:12px;border-radius:8px;font-size:13px;color:#475569;line-height:1.5;margin-bottom:16px;">' + car.description + '</div>' : '') +
-      
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">' +
-      '<button onclick="searchPartsForCar('' + car.make + '', '' + car.model + '')" style="background:#00a8e8;color:white;border:none;padding:14px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:14px;min-height:48px;">🔧 Find Parts</button>' +
-      '<button onclick="listCarFromIdentify('' + car.make + '', '' + car.model + '', '' + (car.year_range || '') + '')" style="background:#ff6b00;color:white;border:none;padding:14px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:14px;min-height:48px;">📝 List for Sale</button>' +
-      '</div>' +
-      
-      '<button onclick="closeIdentifyCar();openIdentifyCar()" style="width:100%;margin-top:10px;background:#f0f4f8;color:#0b1e3a;border:1px solid #e0e6ed;padding:12px;border-radius:10px;font-weight:600;cursor:pointer;font-size:13px;">Try Another Photo</button>';
-  }
-  
-  document.getElementById('identify-result-content').innerHTML = html;
-  document.getElementById('identify-stage-upload').style.display = 'none';
-  document.getElementById('identify-stage-result').style.display = 'block';
-}
-
-
-function handleIdentifyFileSelected(event) {
-  if (event.target.files && event.target.files.length > 0) {
-    identifySelectedFile = event.target.files[0];
-    handleIdentifyUpload();
-  }
-}
-
-function triggerIdentifyInput() {
-  var input = document.getElementById('identify-file-input');
-  if (!input) {
-    alert('Input not found. Please reload the page.');
-    return;
-  }
-  
-  // Check if browser supports capture
-  var supportsCapture = 'capture' in document.createElement('input');
-  
-  // Reset the input value to allow selecting the same file again
-  input.value = '';
-  
-  // Try to trigger the file input
-  try {
-    input.click();
-  } catch (err) {
-    alert('Could not open camera: ' + err.message + '\nPlease check your browser permissions.');
-  }
-}
-
-function searchPartsForCar(make, model) {
-  closeIdentifyCar();
-  document.getElementById('search-input').value = make + ' ' + model;
-  switchMarket('parts');
-  setTimeout(function() { doSearch(); }, 100);
-}
-
-function listCarFromIdentify(make, model, yearRange) {
-  closeIdentifyCar();
-  setTimeout(function() {
-    openModal('vehicle');
-    setTimeout(function() {
-      var makeSelect = document.querySelector('select[name="make"]');
-      if (makeSelect) {
-        for (var i = 0; i < makeSelect.options.length; i++) {
-          if (makeSelect.options[i].value.toLowerCase() === make.toLowerCase()) {
-            makeSelect.selectedIndex = i;
-            makeSelect.dispatchEvent(new Event('change'));
-            break;
-          }
-        }
-      }
-      var modelInput = document.querySelector('input[name="model"]');
-      if (modelInput) modelInput.value = model;
-      
-      var titleInput = document.querySelector('input[name="title"]');
-      if (titleInput) {
-        var yearStart = yearRange ? yearRange.split('-')[0] : '';
-        titleInput.value = (yearStart ? yearStart + ' ' : '') + make + ' ' + model;
-      }
-      
-      var descArea = document.querySelector('textarea[name="description"]');
-      if (descArea && !descArea.value) {
-        descArea.value = 'Listed via AI photo identification on Salon AutoZone.';
-      }
-    }, 300);
-  }, 100);
-}
-</script>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <div class="categories" id="categories-row">
 <div class="category" onclick="filterCategory('Brakes')">
@@ -1084,6 +906,117 @@ function init(){
   initSearchCascade();
 }
 init();
+
+// ============ IDENTIFY CAR FEATURE ============
+var identifySelectedFile = null;
+
+function openIdentifyCar() {
+  var token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please log in to use AI car identification.');
+    window.location.href = '/login';
+    return;
+  }
+  document.getElementById('identify-car-modal').style.display = 'flex';
+  document.getElementById('identify-stage-upload').style.display = 'block';
+  document.getElementById('identify-stage-result').style.display = 'none';
+  document.getElementById('identify-status').innerHTML = '';
+  identifySelectedFile = null;
+}
+
+function closeIdentifyCar() {
+  document.getElementById('identify-car-modal').style.display = 'none';
+  document.getElementById('identify-file-input').value = '';
+  identifySelectedFile = null;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var input = document.getElementById('identify-file-input');
+  if (input) {
+    input.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        identifySelectedFile = e.target.files[0];
+        handleIdentifyUpload();
+      }
+    });
+  }
+});
+
+async function handleIdentifyUpload() {
+  if (!identifySelectedFile) return;
+  var statusEl = document.getElementById('identify-status');
+  statusEl.style.color = '#00a8e8';
+  statusEl.innerHTML = '⏳ Analyzing your photo... This takes 5-15 seconds';
+  var fd = new FormData();
+  fd.append('file', identifySelectedFile);
+  var token = localStorage.getItem('token');
+  try {
+    var res = await fetch('/api/identify/car', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: fd
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      statusEl.style.color = '#dc2626';
+      statusEl.innerText = '❌ ' + (data.detail || 'Identification failed');
+      return;
+    }
+    renderIdentifyResult(data.identification);
+  } catch (err) {
+    statusEl.style.color = '#dc2626';
+    statusEl.innerText = '❌ Network error. Please try again.';
+  }
+}
+
+function renderIdentifyResult(car) {
+  var html = '';
+  if (!car.make || !car.model) {
+    html = '<div style="text-align:center;padding:20px;"><div style="font-size:48px;margin-bottom:12px;">😕</div><h3 style="color:#0b1e3a;margin-bottom:8px;">Could Not Identify</h3><p style="color:#64748b;font-size:14px;">The AI could not confidently identify this car. Please try a clearer photo.</p><button onclick="closeIdentifyCar()" style="margin-top:16px;background:#00a8e8;color:white;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;">Try Another Photo</button></div>';
+  } else {
+    var priceRange = '';
+    if (car.estimated_price_sll_low && car.estimated_price_sll_high) {
+      priceRange = 'SLL ' + Math.round(car.estimated_price_sll_low).toLocaleString() + ' – ' + Math.round(car.estimated_price_sll_high).toLocaleString();
+    }
+    var partsList = '';
+    if (car.common_parts && car.common_parts.length > 0) {
+      partsList = car.common_parts.map(function(p) {
+        return '<span style="display:inline-block;background:#f0f9ff;color:#0369a1;padding:6px 12px;border-radius:16px;font-size:12px;font-weight:600;margin:4px 4px 0 0;">' + p + '</span>';
+      }).join('');
+    }
+    html = '<div style="text-align:center;margin-bottom:20px;">' +
+      '<div style="font-size:48px;margin-bottom:8px;">🚗</div>' +
+      '<h2 style="color:#0b1e3a;font-size:22px;margin-bottom:4px;">' + car.make + ' ' + car.model + '</h2>' +
+      '<div style="color:#64748b;font-size:14px;">' + (car.year_range || '') + ' • ' + (car.body_type || '') + ' • ' + (car.color || '') + '</div>' +
+      '</div>' +
+      (priceRange ? '<div style="background:#dcfce7;padding:16px;border-radius:12px;text-align:center;margin-bottom:16px;"><div style="font-size:11px;color:#166534;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Estimated Price</div><div style="font-size:20px;color:#166534;font-weight:900;">' + priceRange + '</div></div>' : '') +
+      (partsList ? '<div style="margin-bottom:16px;"><div style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Common Parts</div><div>' + partsList + '</div></div>' : '') +
+      (car.description ? '<div style="background:#f8fafc;padding:12px;border-radius:8px;font-size:13px;color:#475569;line-height:1.5;margin-bottom:16px;">' + car.description + '</div>' : '') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">' +
+      '<button onclick="searchPartsForCar(\'' + car.make + '\', \'' + car.model + '\')" style="background:#00a8e8;color:white;border:none;padding:14px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:14px;min-height:48px;">🔧 Find Parts</button>' +
+      '<button onclick="listCarFromIdentify(\'' + car.make + '\', \'' + car.model + '\', \'' + (car.year_range || '') + '\')" style="background:#ff6b00;color:white;border:none;padding:14px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:14px;min-height:48px;">📝 List for Sale</button>' +
+      '</div>' +
+      '<button onclick="closeIdentifyCar();openIdentifyCar()" style="width:100%;margin-top:10px;background:#f0f4f8;color:#0b1e3a;border:1px solid #e0e6ed;padding:12px;border-radius:10px;font-weight:600;cursor:pointer;font-size:13px;">Try Another Photo</button>';
+  }
+  document.getElementById('identify-result-content').innerHTML = html;
+  document.getElementById('identify-stage-upload').style.display = 'none';
+  document.getElementById('identify-stage-result').style.display = 'block';
+}
+
+function searchPartsForCar(make, model) {
+  closeIdentifyCar();
+  document.getElementById('search-input').value = make + ' ' + model;
+  if (typeof switchMarket === 'function') switchMarket('parts');
+  setTimeout(function() { if (typeof doSearch === 'function') doSearch(); }, 100);
+}
+
+function listCarFromIdentify(make, model, yearRange) {
+  closeIdentifyCar();
+  setTimeout(function() {
+    if (typeof openModal === 'function') openModal('vehicle');
+  }, 100);
+}
+
 </script>
 </body>
 </html>
