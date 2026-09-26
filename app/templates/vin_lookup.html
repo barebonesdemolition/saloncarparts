@@ -362,9 +362,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
     <h2 style="color:#0b1e3a;margin-bottom:8px;font-size:20px;">📸 Identify Your Car</h2>
     <p style="color:#64748b;font-size:14px;margin-bottom:20px;line-height:1.5;">Take a clear photo of the front or side of the car. AI will tell you the make, model, year, and estimated price in Sierra Leone Leones.</p>
     
-    <input type="file" id="identify-file-input" accept="image/*" capture="environment" style="display:none;">
+    <input type="file" id="identify-file-input" accept="image/*" capture="environment" style="display:none;" onchange="handleIdentifyFileSelected(event)">
     
-    <button onclick="document.getElementById('identify-file-input').click()" style="width:100%;background:#f0f4f8;color:#0b1e3a;border:2px dashed #cbd5e0;padding:32px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:180px;">
+    <button onclick="triggerIdentifyInput()" style="width:100%;background:#f0f4f8;color:#0b1e3a;border:2px dashed #cbd5e0;padding:32px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:180px;">
       <span style="font-size:48px;">📷</span>
       <span>Tap to Take Photo or Upload</span>
       <span style="font-size:12px;color:#94a3b8;font-weight:normal;">JPG, PNG, or WEBP • Max 8 MB</span>
@@ -486,6 +486,35 @@ function renderIdentifyResult(car) {
   document.getElementById('identify-result-content').innerHTML = html;
   document.getElementById('identify-stage-upload').style.display = 'none';
   document.getElementById('identify-stage-result').style.display = 'block';
+}
+
+
+function handleIdentifyFileSelected(event) {
+  if (event.target.files && event.target.files.length > 0) {
+    identifySelectedFile = event.target.files[0];
+    handleIdentifyUpload();
+  }
+}
+
+function triggerIdentifyInput() {
+  var input = document.getElementById('identify-file-input');
+  if (!input) {
+    alert('Input not found. Please reload the page.');
+    return;
+  }
+  
+  // Check if browser supports capture
+  var supportsCapture = 'capture' in document.createElement('input');
+  
+  // Reset the input value to allow selecting the same file again
+  input.value = '';
+  
+  // Try to trigger the file input
+  try {
+    input.click();
+  } catch (err) {
+    alert('Could not open camera: ' + err.message + '\nPlease check your browser permissions.');
+  }
 }
 
 function searchPartsForCar(make, model) {
