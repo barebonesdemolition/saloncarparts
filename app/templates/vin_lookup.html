@@ -1551,6 +1551,42 @@ document.addEventListener('change', function(e) {
     }
 }, true);
 
+
+// ========== AUTO-OPEN MODAL FROM URL ==========
+(function autoOpenModalFromURL() {
+    var params = new URLSearchParams(window.location.search);
+    var action = params.get('action');
+    
+    if (action === 'list-car' || action === 'list-vehicle') {
+        // Small delay to let page load
+        setTimeout(function() {
+            var token = localStorage.getItem('token');
+            if (token && typeof openModal === 'function') {
+                openModal('vehicle');
+            }
+        }, 500);
+    } else if (action === 'list-part' || action === 'list-parts') {
+        setTimeout(function() {
+            var token = localStorage.getItem('token');
+            if (token && typeof openModal === 'function') {
+                openModal('parts');
+            }
+        }, 500);
+    }
+    
+    // Clean URL after opening (optional)
+    if (action) {
+        setTimeout(function() {
+            try {
+                window.history.replaceState({}, '', window.location.pathname);
+            } catch(e) {}
+        }, 2000);
+    }
+})();
+
+
+console.log('[Salon AutoZone] Page loaded. openModal exists:', typeof openModal);
+
 </script>
 </body>
 </html>

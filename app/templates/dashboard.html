@@ -78,7 +78,7 @@ const cars = await res.json();
 const myCars = cars.filter(c => c.seller_id === currentUser.id);
 document.getElementById('stat-cars').innerText = myCars.length;
 const el = document.getElementById('cars-list');
-if (myCars.length === 0) { el.innerHTML = '<div class="empty">You haven\'t listed any cars yet.<br><br><a href="/" style="color:#00a8e8;font-weight:bold;">+ List Your First Car</a></div>'; return; }
+if (myCars.length === 0) { el.innerHTML = '<div class="empty">You haven\'t listed any cars yet.<br><br><a href="/?action=list-car" style="color:#00a8e8;font-weight:bold;">+ List Your First Car</a></div>'; return; }
 el.innerHTML = myCars.map(c => '<div class="listing-row"><div><div class="listing-title">' + c.title + '</div><div class="listing-meta">' + c.year + ' • ' + c.transmission + ' • 📍 ' + c.location + '</div><div class="listing-price">SLL ' + c.price_sll.toLocaleString() + '</div></div><div><button class="action-btn delete-btn" onclick="deleteCar(' + c.id + ')">Delete</button></div></div>').join('');
 } catch (err) { document.getElementById('cars-list').innerHTML = '<div class="empty">Error loading cars.</div>'; }
 }
