@@ -192,109 +192,280 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 }
 
 
-/* ========== ALWAYS-VISIBLE MOBILE NAVBAR ========== */
+
+/* =========================================================
+   MOBILE HOMEPAGE — FINAL POLISH
+   ========================================================= */
+
 @media (max-width: 768px) {
-    /* Hide the hamburger menu completely */
-    .hamburger { display: none !important; }
-    
-    /* Top bar — show brand + key CTAs prominently */
+
+    /* ===== TOP BAR ===== */
     .top-bar {
-        padding: 8px 12px;
-        font-size: 11px;
-        flex-direction: column;
-        gap: 6px;
-        text-align: center;
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        text-align: center !important;
     }
     .top-bar > div {
         display: flex !important;
         justify-content: center !important;
-        flex-wrap: wrap;
-        gap: 12px;
+        flex-wrap: wrap !important;
+        gap: 12px !important;
     }
-    
-    /* Brand bar — stack vertically but SHOW all links */
+    .top-bar a { font-size: 11px !important; }
+
+    /* ===== BRAND BAR ===== */
     .brand-bar {
-        padding: 12px 14px;
-        flex-direction: column;
-        gap: 10px;
-        align-items: stretch;
+        padding: 12px 14px !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        align-items: stretch !important;
     }
-    
-    .brand-logo {
-        text-align: center;
-        font-size: 18px;
-        margin-bottom: 4px;
+
+    .brand-logo,
+    .brand-logo-text {
+        text-align: center !important;
+        font-size: 17px !important;
+        margin-bottom: 0 !important;
     }
-    
-    /* Toggle buttons full width */
+
+    /* ===== TOGGLE (Parts/Cars) ===== */
     .brand-toggle {
-        width: 100%;
-        justify-content: stretch;
+        width: 100% !important;
+        justify-content: stretch !important;
+        background: #f0f4f8 !important;
+        padding: 5px !important;
     }
     .brand-toggle button {
-        flex: 1;
-        padding: 11px 8px;
-        font-size: 12px;
-        min-height: 44px;
+        flex: 1 !important;
+        padding: 11px 6px !important;
+        font-size: 12px !important;
+        min-height: 44px !important;
     }
-    
-    /* Action buttons ALWAYS VISIBLE — no hamburger */
+
+    /* ===== HIDE HAMBURGER ===== */
+    .hamburger { display: none !important; }
+    .mobile-menu { display: none !important; }
+
+    /* ===== ACTIONS — ALWAYS VISIBLE ===== */
     .brand-actions {
         display: flex !important;
-        width: 100%;
-        justify-content: center;
-        gap: 8px;
-        flex-wrap: wrap;
+        width: 100% !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
     }
-    .brand-actions a {
-        flex: 1;
-        min-width: calc(50% - 4px);
-        padding: 11px 12px !important;
+    .brand-actions a,
+    .brand-actions .list-btn {
+        flex: 1 !important;
+        min-width: calc(33.333% - 4px) !important;
+        padding: 11px 6px !important;
         font-size: 12px !important;
-        text-align: center;
-        background: #f0f4f8;
-        border-radius: 8px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
+        text-align: center !important;
+        background: #f0f4f8 !important;
+        border-radius: 8px !important;
         color: #0b1e3a !important;
-        text-decoration: none;
+        font-weight: 700 !important;
+        text-decoration: none !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
-    .brand-actions a.list-btn {
+    .brand-actions .list-btn {
         background: #ff6b00 !important;
         color: white !important;
-        flex: 1;
-        min-width: calc(50% - 4px);
     }
-    
-    /* Mobile menu — hide it entirely */
-    .mobile-menu { display: none !important; }
-    
-    /* Fitment controls compact */
+
+    /* ===== FITMENT BAR ===== */
+    .fitment-bar {
+        padding: 12px 14px !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    .fitment-left {
+        width: 100% !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+    .fitment-icon {
+        width: 36px !important;
+        height: 36px !important;
+        flex-shrink: 0 !important;
+    }
+    .fitment-value { font-size: 13px !important; line-height: 1.3 !important; }
     .fitment-controls {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
     }
     .fitment-controls select {
         width: 100% !important;
-        min-height: 42px;
-        font-size: 13px;
+        min-height: 42px !important;
+        font-size: 13px !important;
     }
     .fitment-controls button {
-        width: 100%;
-        min-height: 42px;
-        font-size: 13px;
+        grid-column: 1 / -1 !important;
+        min-height: 44px !important;
+        font-size: 14px !important;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+        padding: 30px 16px 70px !important;
+    }
+    .hero h1 {
+        font-size: 24px !important;
+        line-height: 1.2 !important;
+        margin-bottom: 10px !important;
+    }
+    .hero p {
+        font-size: 14px !important;
+        padding: 0 8px !important;
+        margin-bottom: 24px !important;
+    }
+    .hero-badge {
+        font-size: 10px !important;
+        padding: 5px 12px !important;
+    }
+
+    /* ===== SEARCH BAR — SIMPLIFIED ===== */
+    .search-container {
+        padding: 12px !important;
+        border-radius: 12px !important;
+    }
+    .search-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+    .search-row select,
+    .search-row input,
+    .search-row button {
+        padding: 12px !important;
+        font-size: 14px !important;
+        min-height: 46px !important;
+        border-radius: 9px !important;
+    }
+    .search-row button {
+        grid-column: 1 / -1 !important;
+        font-size: 15px !important;
+    }
+    .search-text-row input {
+        font-size: 15px !important;
+        padding: 12px 14px !important;
+        min-height: 46px !important;
+    }
+
+    /* ===== CATEGORIES — 3 PER ROW ===== */
+    .categories {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+        margin-top: -40px !important;
+        padding: 0 12px !important;
+        margin-bottom: 24px !important;
+    }
+    .category {
+        padding: 14px 6px !important;
+        border-radius: 12px !important;
+    }
+    .cat-icon {
+        width: 26px !important;
+        height: 26px !important;
+        margin-bottom: 6px !important;
+    }
+    .category-icon { font-size: 24px !important; margin-bottom: 4px !important; }
+    .category-label { font-size: 11px !important; }
+
+    /* ===== RESULTS SECTION ===== */
+    .results-section {
+        padding: 0 12px !important;
+        margin-top: 20px !important;
+        margin-bottom: 40px !important;
+    }
+    .results-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        margin-bottom: 14px !important;
+    }
+    .results-title { font-size: 18px !important; }
+    .results-count { font-size: 12px !important; padding: 5px 12px !important; }
+
+    /* ===== CARDS — COMPACT ===== */
+    .grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    .card {
+        border-radius: 12px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+    }
+    .card-img {
+        width: 110px !important;
+        height: auto !important;
+        min-height: 110px !important;
+        font-size: 40px !important;
+        flex-shrink: 0 !important;
+        border-radius: 12px 0 0 12px !important;
+    }
+    .card-badges { top: 6px !important; left: 6px !important; }
+    .badge { font-size: 9px !important; padding: 3px 7px !important; }
+    .card-body {
+        padding: 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        flex: 1 !important;
+    }
+    .card-title {
+        font-size: 14px !important;
+        line-height: 1.3 !important;
+        margin-bottom: 6px !important;
+    }
+    .card-price {
+        font-size: 18px !important;
+        margin-bottom: 4px !important;
+    }
+    .card-price-usd { font-size: 12px !important; margin-bottom: 8px !important; }
+    .card-meta { gap: 4px !important; }
+    .meta-tag { font-size: 10px !important; padding: 3px 7px !important; }
+
+    /* ===== IDENTIFY CAR BUTTON — COMPACT ===== */
+    #identify-car-btn,
+    button[onclick*="IdentifyCar"] {
+        font-size: 13px !important;
+        padding: 12px 14px !important;
+        min-height: 48px !important;
+    }
+
+    /* ===== AI CHAT ===== */
+    #ai-chat-bubble {
+        width: 56px !important;
+        height: 56px !important;
+        font-size: 26px !important;
+        bottom: 18px !important;
+        right: 18px !important;
+    }
+    #ai-chat-panel {
+        width: calc(100vw - 20px) !important;
+        right: 10px !important;
+        bottom: 88px !important;
+        height: 70vh !important;
+        max-height: calc(100vh - 120px) !important;
     }
 }
 
 @media (max-width: 400px) {
-    .brand-logo { font-size: 15px; }
-    .brand-toggle button { font-size: 11px; padding: 10px 6px; }
-    .brand-actions a { font-size: 11px; padding: 10px 8px !important; }
+    .hero h1 { font-size: 21px !important; }
+    .categories { grid-template-columns: repeat(2, 1fr) !important; }
+    .search-row { grid-template-columns: 1fr !important; }
+    .brand-actions a { min-width: calc(50% - 3px) !important; }
+    .card-img { width: 90px !important; min-height: 90px !important; font-size: 32px !important; }
 }
 
 </style>
