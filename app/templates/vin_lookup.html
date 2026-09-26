@@ -631,7 +631,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 <select id="fitment-make"><option value="">Select Make</option></select>
 <select id="fitment-model"><option value="">Select Model</option></select>
 <select id="fitment-year"><option value="">Select Year</option></select>
-<button class="btn-save" onclick="saveFitment()">Save</button>
+<button type="button" class="btn-save" onclick="event.preventDefault(); saveFitment(); return false;">Save</button>
 <button class="btn-clear" id="fitment-clear" onclick="clearFitment()">Clear</button>
 </div>
 </div>
@@ -687,7 +687,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 </div>
 
 <div style="margin-top:18px;text-align:center;">
-<button onclick="openImportModal()" style="background:linear-gradient(135deg,#ff6b00,#e55a00);color:white;border:none;padding:14px 28px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:15px;box-shadow:0 8px 20px rgba(255,107,0,0.35);">
+<button type="button" onclick="event.preventDefault(); openImportModal(); return false;" style="background:linear-gradient(135deg,#ff6b00,#e55a00);color:white;border:none;padding:14px 28px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:15px;box-shadow:0 8px 20px rgba(255,107,0,0.35);">
 🌍 Can't find it locally? Request from Abroad
 </button>
 </div>
@@ -701,7 +701,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 
 <!-- IDENTIFY CAR FEATURE BUTTON -->
 <div style="max-width:800px;margin:14px auto 0;padding:0 12px;">
-  <button type="button" onclick="openIdentifyCar()" style="width:100%;background:linear-gradient(135deg,#00a8e8,#0077b6);color:white;border:none;padding:14px 20px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 20px rgba(0,168,232,0.35);min-height:52px;">
+  <button type="button" onclick="event.preventDefault(); openIdentifyCar(); return false;" style="width:100%;background:linear-gradient(135deg,#00a8e8,#0077b6);color:white;border:none;padding:14px 20px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 20px rgba(0,168,232,0.35);min-height:52px;">
     <span style="font-size:20px;">📸</span> Identify Your Car from a Photo — AI Powered
   </button>
 </div>
@@ -728,27 +728,27 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#1a1a1a}
 </div>
 
 <div class="categories" id="categories-row">
-<div class="category" onclick="filterCategory('Brakes')">
+<div class="category" onclick="event.preventDefault(); filterCategory('Brakes')">
 <svg class="cat-icon"><use href="#icon-brakes"/></svg>
 <div class="category-label">Brakes</div>
 </div>
-<div class="category" onclick="filterCategory('Engine')">
+<div class="category" onclick="event.preventDefault(); filterCategory('Engine')">
 <svg class="cat-icon"><use href="#icon-engine"/></svg>
 <div class="category-label">Engine</div>
 </div>
-<div class="category" onclick="filterCategory('Suspension')">
+<div class="category" onclick="event.preventDefault(); filterCategory('Suspension')">
 <svg class="cat-icon"><use href="#icon-suspension"/></svg>
 <div class="category-label">Suspension</div>
 </div>
-<div class="category" onclick="filterCategory('Electrical')">
+<div class="category" onclick="event.preventDefault(); filterCategory('Electrical')">
 <svg class="cat-icon"><use href="#icon-electrical"/></svg>
 <div class="category-label">Electrical</div>
 </div>
-<div class="category" onclick="filterCategory('Tires &amp; Wheels')">
+<div class="category" onclick="event.preventDefault(); filterCategory('Tires &amp; Wheels')">
 <svg class="cat-icon"><use href="#icon-tires"/></svg>
 <div class="category-label">Tires</div>
 </div>
-<div class="category" onclick="filterCategory('Accessories')">
+<div class="category" onclick="event.preventDefault(); filterCategory('Accessories')">
 <svg class="cat-icon"><use href="#icon-accessories"/></svg>
 <div class="category-label">Accessories</div>
 </div>
@@ -1527,6 +1527,29 @@ async function compressImage(file, maxWidth, quality) {
     reader.readAsDataURL(file);
   });
 }
+
+
+// ============ GLOBAL FORM PROTECTION ============
+// Prevent accidental form submissions that reload the page
+document.addEventListener('submit', function(e) {
+    // Only intercept the listing form and let submitListing handle it
+    if (e.target.id === 'listing-form') {
+        // submitListing will handle this via onsubmit attribute
+        // But add a safety net
+        e.preventDefault();
+        if (typeof submitListing === 'function') {
+            submitListing(e);
+        }
+    }
+}, true);
+
+// Prevent any file input change from triggering form submit
+document.addEventListener('change', function(e) {
+    if (e.target.type === 'file') {
+        e.stopPropagation();
+        // Don't preventDefault — we need the file to be selected
+    }
+}, true);
 
 </script>
 </body>
