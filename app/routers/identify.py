@@ -14,6 +14,8 @@ from sqlalchemy import func
 from app.db import get_db
 from app import models
 from app.config import get_settings
+import json
+import re
 
 router = APIRouter(prefix="/api/identify", tags=["AI Identification"])
 settings = get_settings()
@@ -134,7 +136,6 @@ Rules:
             response = model.generate_content([prompt, gemini_file])
             
             # Parse JSON from response
-            import json, re
             text = response.text.strip()
             # Remove markdown code fences if present
             text = re.sub(r'^```(?:json)?\s*', '', text)
